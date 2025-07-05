@@ -13,7 +13,7 @@ SERVICE_CALL_NUMBER = "call_number"
 SERVICE_HANGUP = "hangup"
 SERVICE_RING_DEVICE = "ring_device"
 SERVICE_RESET_DEVICE = "reset_device"
-SERVICE_SET_DOWNLOAD_MODE = "set_download_mode"
+SERVICE_SET_MAINTENANCE_MODE = "set_maintenance_mode"
 SERVICE_SWITCH_TO_CALL_WAITING = "switch_to_call_waiting"
 SERVICE_ADD_PHONEBOOK_ENTRY = "add_phonebook_entry"
 SERVICE_REMOVE_PHONEBOOK_ENTRY = "remove_phonebook_entry"
@@ -41,7 +41,7 @@ RESET_DEVICE_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
 })
 
-SET_DOWNLOAD_MODE_SCHEMA = vol.Schema({
+SET_MAINTENANCE_MODE_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
     vol.Required("enabled"): cv.boolean,
 })
@@ -224,8 +224,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             _LOGGER.error("Device %s not found", device_id)
 
-    async def handle_set_download_mode(call: ServiceCall) -> None:
-        """Handle set download mode service."""
+    async def handle_set_maintenance_mode(call: ServiceCall) -> None:
+        """Handle set maintenance mode service."""
         device_id = call.data.get("device_id")
         enabled = call.data.get("enabled")
         
@@ -236,8 +236,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            await coordinator.set_download_mode(enabled)
-            _LOGGER.info("Set download mode to %s on device %s", enabled, device_id)
+            await coordinator.set_maintenance_mode(enabled)
+            _LOGGER.info("Set maintenance mode to %s on device %s", enabled, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
@@ -329,7 +329,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_SET_DOWNLOAD_MODE, handle_set_download_mode, schema=SET_DOWNLOAD_MODE_SCHEMA
+        DOMAIN, SERVICE_SET_MAINTENANCE_MODE, handle_set_maintenance_mode, schema=SET_MAINTENANCE_MODE_SCHEMA
     )
     
     hass.services.async_register(
@@ -371,7 +371,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_HANGUP)
     hass.services.async_remove(DOMAIN, SERVICE_RING_DEVICE)
     hass.services.async_remove(DOMAIN, SERVICE_RESET_DEVICE)
-    hass.services.async_remove(DOMAIN, SERVICE_SET_DOWNLOAD_MODE)
+    hass.services.async_remove(DOMAIN, SERVICE_SET_MAINTENANCE_MODE)
     hass.services.async_remove(DOMAIN, SERVICE_SWITCH_TO_CALL_WAITING)
     hass.services.async_remove(DOMAIN, SERVICE_ADD_PHONEBOOK_ENTRY)
     hass.services.async_remove(DOMAIN, SERVICE_REMOVE_PHONEBOOK_ENTRY)

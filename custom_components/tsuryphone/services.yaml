@@ -61,9 +61,9 @@ reset_device:
       selector:
         text:
 
-set_download_mode:
-  name: Set Download Mode
-  description: Enable or disable download mode for firmware updates
+set_maintenance_mode:
+  name: Set Maintenance Mode
+  description: Enable or disable maintenance mode for firmware updates
   fields:
     device_id:
       name: Device ID
@@ -72,8 +72,8 @@ set_download_mode:
       selector:
         text:
     enabled:
-      name: Enable Download Mode
-      description: Whether to enable or disable download mode
+      name: Enable Maintenance Mode
+      description: Whether to enable or disable maintenance mode
       required: true
       selector:
         boolean:

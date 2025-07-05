@@ -36,7 +36,7 @@ ENDPOINT_ACTION_CALL = "/action/call"
 ENDPOINT_ACTION_HANGUP = "/action/hangup"
 ENDPOINT_ACTION_RESET = "/action/reset"
 ENDPOINT_ACTION_RING = "/action/ring"
-ENDPOINT_ACTION_DOWNLOAD_MODE = "/action/download_mode"
+ENDPOINT_ACTION_MAINTENANCE_MODE = "/action/maintenance_mode"
 ENDPOINT_ACTION_SWITCH_CALL_WAITING = "/action/switch_call_waiting"
 
 # Phone states

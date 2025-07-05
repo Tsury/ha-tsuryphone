@@ -25,7 +25,7 @@ async def async_setup_entry(
     entities = [
         TsuryPhoneDndForceSwitch(coordinator),
         TsuryPhoneDndScheduleSwitch(coordinator),
-        TsuryPhoneDownloadModeSwitch(coordinator),
+        TsuryPhoneMaintenanceModeSwitch(coordinator),
     ]
 
     async_add_entities(entities)
@@ -102,28 +102,28 @@ class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
         await self.coordinator.async_request_refresh()
 
 
-class TsuryPhoneDownloadModeSwitch(TsuryPhoneBaseSwitch):
-    """Switch to enable/disable download mode."""
+class TsuryPhoneMaintenanceModeSwitch(TsuryPhoneBaseSwitch):
+    """Switch to enable/disable maintenance mode."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, "download_mode")
-        self._attr_name = "TsuryPhone Download Mode"
-        self._attr_icon = "mdi:download"
+        super().__init__(coordinator, "maintenance_mode")
+        self._attr_name = "TsuryPhone Maintenance Mode"
+        self._attr_icon = "mdi:wrench"
 
     @property
     def is_on(self) -> bool:
-        """Return true if download mode is enabled."""
+        """Return true if maintenance mode is enabled."""
         if "status" in self.coordinator.data:
-            return self.coordinator.data["status"].get("download_mode", False)
+            return self.coordinator.data["status"].get("maintenance_mode", False)
         return False
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on download mode."""
-        await self.coordinator.set_download_mode(True)
+        """Turn on maintenance mode."""
+        await self.coordinator.set_maintenance_mode(True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off download mode."""
-        await self.coordinator.set_download_mode(False)
+        """Turn off maintenance mode."""
+        await self.coordinator.set_maintenance_mode(False)
         await self.coordinator.async_request_refresh()
