@@ -6,10 +6,10 @@ DOMAIN = "tsuryphone"
 PLATFORMS = [
     "binary_sensor",
     "button", 
-    "number",
     "select",
     "sensor",
     "switch",
+    "time",
 ]
 
 # Configuration
