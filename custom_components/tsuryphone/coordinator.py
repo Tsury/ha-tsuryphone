@@ -20,7 +20,6 @@ from .const import (
     ENDPOINT_ACTION_CALL,
     ENDPOINT_ACTION_HANGUP,
     ENDPOINT_ACTION_RESET,
-    ENDPOINT_ACTION_REBOOT,
     ENDPOINT_ACTION_RING,
     CONF_HOST,
     CONF_PORT,
@@ -104,10 +103,6 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
     async def reset_device(self) -> None:
         """Reset the device."""
         await self._make_request("POST", ENDPOINT_ACTION_RESET)
-
-    async def reboot_device(self) -> None:
-        """Reboot the device."""
-        await self._make_request("POST", ENDPOINT_ACTION_REBOOT)
 
     async def ring_device(self, duration_ms: int) -> None:
         """Ring the device for specified duration."""
