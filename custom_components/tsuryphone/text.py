@@ -64,6 +64,9 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
         self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
+        self._attr_extra_state_attributes = {
+            "description": "Enter phone number to call (e.g., +1234567890 or *67)"
+        }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and make the call."""
@@ -81,11 +84,6 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""
-
-    @property
-    def entity_description(self) -> str:
-        """Return entity description."""
-        return "Enter phone number to call (e.g., +1234567890 or *67)"
 
     @property
     def available(self) -> bool:
@@ -110,6 +108,9 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
         self._attr_pattern = r"^.+:\s*.+$"
         self._attr_native_value = ""
         self._attr_native_max = 60
+        self._attr_extra_state_attributes = {
+            "description": "Format: 'Name: Number' (e.g., 'John Smith: +1234567890')"
+        }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and add phonebook entry."""
@@ -136,11 +137,6 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
         else:
             self._attr_native_value = value
 
-    @property
-    def entity_description(self) -> str:
-        """Return entity description."""
-        return "Format: 'Name: Number' (e.g., 'John Smith: +1234567890')"
-
 
 class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
     """Text entity for removing phonebook entries."""
@@ -153,6 +149,9 @@ class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
         self._attr_mode = TextMode.TEXT
         self._attr_native_value = ""
         self._attr_native_max = 30
+        self._attr_extra_state_attributes = {
+            "description": "Enter the name to remove from phonebook"
+        }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and remove phonebook entry."""
@@ -170,11 +169,6 @@ class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
         else:
             self._attr_native_value = ""
 
-    @property
-    def entity_description(self) -> str:
-        """Return entity description."""
-        return "Enter the name to remove from phonebook"
-
 
 class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
     """Text entity for adding screened numbers."""
@@ -188,6 +182,9 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
         self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
+        self._attr_extra_state_attributes = {
+            "description": "Enter phone number to block"
+        }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and add screened number."""
@@ -206,11 +203,6 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
         else:
             self._attr_native_value = ""
 
-    @property
-    def entity_description(self) -> str:
-        """Return entity description."""
-        return "Enter phone number to block"
-
 
 class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
     """Text entity for removing screened numbers."""
@@ -224,6 +216,9 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
         self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
+        self._attr_extra_state_attributes = {
+            "description": "Enter phone number to unblock"
+        }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and remove screened number."""
@@ -241,8 +236,3 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""
-
-    @property
-    def entity_description(self) -> str:
-        """Return entity description."""
-        return "Enter phone number to unblock"
