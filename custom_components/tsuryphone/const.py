@@ -10,7 +10,6 @@ PLATFORMS = [
     "select",
     "sensor",
     "switch",
-    "time",
 ]
 
 # Configuration
