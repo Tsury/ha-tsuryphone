@@ -26,9 +26,7 @@ async def async_setup_entry(
     entities = [
         TsuryPhoneCallNumberText(coordinator),
         TsuryPhoneAddPhonebookText(coordinator),
-        TsuryPhoneRemovePhonebookText(coordinator),
         TsuryPhoneAddScreenedText(coordinator),
-        TsuryPhoneRemoveScreenedText(coordinator),
     ]
 
     async_add_entities(entities)
@@ -57,7 +55,7 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "call_number")
-        self._attr_name = "TsuryPhone Call Custom Number"
+        self._attr_name = "Call Custom Number"
         self._attr_icon = "mdi:phone-dial"
         self._attr_mode = TextMode.TEXT
         # More permissive pattern that allows common phone number formats and empty string
@@ -101,34 +99,34 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "add_phonebook")
-        self._attr_name = "TsuryPhone Add Phonebook Entry"
-        self._attr_icon = "mdi:account-plus"
+        self._attr_name = "Add Quick Dial Entry"
+        self._attr_icon = "mdi:dialpad"
         self._attr_mode = TextMode.TEXT
-        # More flexible pattern for name and number combinations, allow empty
+        # More flexible pattern for entry number and phone number combinations, allow empty
         self._attr_pattern = r"^$|^.+:\s*.+$"
         self._attr_native_value = ""
         self._attr_native_max = 60
         self._attr_extra_state_attributes = {
-            "description": "Format: 'Name: Number' (e.g., 'John Smith: +1234567890')"
+            "description": "Format: 'Entry Number: Phone Number' (e.g., '5: +1234567890')"
         }
 
     async def async_set_value(self, value: str) -> None:
-        """Set the text value and add phonebook entry."""
-        # Expected format: "Name: Number"
+        """Set the text value and add quick dial entry."""
+        # Expected format: "Entry Number: Phone Number" (e.g., "5: +1234567890")
         if ":" in value:
             parts = value.split(":", 1)
             if len(parts) == 2:
-                name = parts[0].strip()
-                number = re.sub(r'[^\d\+#\*]', '', parts[1].strip())
+                entry_number = parts[0].strip()
+                phone_number = re.sub(r'[^\d\+#\*]', '', parts[1].strip())
                 
-                if name and number:
+                if entry_number and phone_number:
                     try:
-                        await self.coordinator.add_phonebook_entry(name, number)
-                        _LOGGER.info("Added phonebook entry: %s -> %s", name, number)
+                        await self.coordinator.add_phonebook_entry(entry_number, phone_number)
+                        _LOGGER.info("Added quick dial entry: %s -> %s", entry_number, phone_number)
                         self._attr_native_value = ""  # Clear after adding
                         await self.coordinator.async_request_refresh()
                     except Exception as err:
-                        _LOGGER.error("Failed to add phonebook entry %s: %s", name, err)
+                        _LOGGER.error("Failed to add quick dial entry %s: %s", entry_number, err)
                         self._attr_native_value = value  # Keep the value if failed
                 else:
                     self._attr_native_value = value
@@ -176,7 +174,7 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "add_screened")
-        self._attr_name = "TsuryPhone Add Blocked Number"
+        self._attr_name = "Add Blocked Number"
         self._attr_icon = "mdi:phone-off"
         self._attr_mode = TextMode.TEXT
         self._attr_pattern = r"^$|^[\d\+\-\(\)\s\.#\*]+$"

@@ -25,6 +25,8 @@ async def async_setup_entry(
     entities = [
         TsuryPhonePhonebookSelect(coordinator),
         TsuryPhoneBlockedNumbersSelect(coordinator),
+        TsuryPhoneRemovePhonebookSelect(coordinator),
+        TsuryPhoneRemoveBlockedSelect(coordinator),
     ]
 
     async_add_entities(entities)
@@ -48,65 +50,48 @@ class TsuryPhoneBaseSelect(CoordinatorEntity, SelectEntity):
 
 
 class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
-    """Select entity for phonebook management - call or remove entries."""
+    """Select entity for calling phonebook entries."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the select."""
         super().__init__(coordinator, "phonebook")
-        self._attr_name = "TsuryPhone Phonebook"
-        self._attr_icon = "mdi:book-account"
+        self._attr_name = "Call Quick Dial"
+        self._attr_icon = "mdi:phone-dial"
         
     @property
     def options(self) -> List[str]:
         """Return the list of available options."""
-        options = ["Select phonebook action..."]
+        options = ["Select quick dial to call..."]
         
         if "phonebook" in self.coordinator.data:
             entries = self.coordinator.data["phonebook"].get("entries", [])
             if entries:
-                options.append("--- Call Contact ---")
-                # Only show call options, no remove mixed in
+                # Only show call options - entry number and phone number
                 for entry in entries:
-                    options.append(f"📞 {entry['name']} ({entry['number']})")
-                
-                options.append("--- Remove Contact ---")
-                # Only show remove options with phone numbers for clarity
-                for entry in entries:
-                    options.append(f"🗑️ {entry['name']} ({entry['number']})")
+                    options.append(f"📞 Dial {entry['name']} → {entry['number']}")
             else:
-                options.append("No contacts in phonebook")
+                options.append("No quick dial entries")
         
         return options
 
     @property
     def current_option(self) -> Optional[str]:
         """Return the current option."""
-        return "Select phonebook action..."
+        return "Select quick dial to call..."
 
     async def async_select_option(self, option: str) -> None:
         """Change the selected option and perform action."""
-        if option in ["Select phonebook action...", "--- Call Contact ---", "--- Remove Contact ---", "No contacts in phonebook"]:
+        if option in ["Select quick dial to call...", "No quick dial entries"]:
             return
             
-        if option.startswith("📞 "):
-            # Extract number and call it
-            if "(" in option and ")" in option:
-                start = option.rfind("(") + 1
-                end = option.rfind(")")
-                number = option[start:end]
-                await self.coordinator.call_number(number)
-                _LOGGER.info("Called %s from phonebook", number)
+        if option.startswith("📞 Dial "):
+            # Extract the entry number (quick dial) to call
+            # Format: "📞 Dial 5 → +1234567890"
+            if " → " in option:
+                entry_number = option.split(" → ")[0].replace("📞 Dial ", "")
+                await self.coordinator.call_number(entry_number)
+                _LOGGER.info("Called quick dial %s from phonebook", entry_number)
                 await self.coordinator.async_request_refresh()
-        
-        elif option.startswith("🗑️ "):
-            # Extract name and remove from phonebook (handle name with phone number format)
-            name = option.replace("🗑️ ", "")
-            # If format is "Name (Number)", extract just the name
-            if " (" in name and name.endswith(")"):
-                name = name.split(" (")[0]
-            await self.coordinator.remove_phonebook_entry(name)
-            _LOGGER.info("Removed %s from phonebook", name)
-            await self.coordinator.async_request_refresh()
 
     @property
     def available(self) -> bool:
@@ -149,6 +134,106 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
     async def async_select_option(self, option: str) -> None:
         """Change the selected option and perform action."""
         if option in ["Select blocked number action...", "--- Unblock Number ---", "No blocked numbers"]:
+            return
+            
+        if option.startswith("✅ "):
+            # Remove the number from screened list
+            number = option.replace("✅ ", "")
+            await self.coordinator.remove_screened_number(number)
+            _LOGGER.info("Unblocked number: %s", number)
+            await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        # Always available
+        return True
+
+
+class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
+    """Select entity for removing phonebook entries."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the select."""
+        super().__init__(coordinator, "remove_phonebook")
+        self._attr_name = "Remove Quick Dial Entry"
+        self._attr_icon = "mdi:dialpad-minus"
+        
+    @property
+    def options(self) -> List[str]:
+        """Return the list of available options."""
+        options = ["Select quick dial to remove..."]
+        
+        if "phonebook" in self.coordinator.data:
+            entries = self.coordinator.data["phonebook"].get("entries", [])
+            if entries:
+                # Show remove options with entry number and phone number for clarity
+                for entry in entries:
+                    options.append(f"🗑️ Entry {entry['name']} → {entry['number']}")
+            else:
+                options.append("No quick dial entries")
+        
+        return options
+
+    @property
+    def current_option(self) -> Optional[str]:
+        """Return the current option."""
+        return "Select quick dial to remove..."
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option and perform action."""
+        if option in ["Select quick dial to remove...", "No quick dial entries"]:
+            return
+            
+        if option.startswith("🗑️ Entry "):
+            # Extract entry number and remove from phonebook
+            # Format: "🗑️ Entry 5 → +1234567890"
+            if " → " in option:
+                entry_number = option.split(" → ")[0].replace("🗑️ Entry ", "")
+                await self.coordinator.remove_phonebook_entry(entry_number)
+                _LOGGER.info("Removed quick dial entry %s from phonebook", entry_number)
+                await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        # Always available
+        return True
+
+
+class TsuryPhoneRemoveBlockedSelect(TsuryPhoneBaseSelect):
+    """Select entity for removing blocked numbers."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the select."""
+        super().__init__(coordinator, "remove_blocked")
+        self._attr_name = "Remove Blocked Number"
+        self._attr_icon = "mdi:phone-check"
+        
+    @property
+    def options(self) -> List[str]:
+        """Return the list of available options."""
+        options = ["Select number to unblock..."]
+        
+        if "screened" in self.coordinator.data:
+            entries = self.coordinator.data["screened"].get("numbers", [])
+            if entries:
+                # Show unblock options
+                for entry in entries:
+                    options.append(f"✅ {entry}")
+            else:
+                options.append("No blocked numbers")
+        
+        return options
+
+    @property
+    def current_option(self) -> Optional[str]:
+        """Return the current option."""
+        return "Select number to unblock..."
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option and perform action."""
+        if option in ["Select number to unblock...", "No blocked numbers"]:
             return
             
         if option.startswith("✅ "):
