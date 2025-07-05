@@ -79,6 +79,13 @@ class TsuryPhoneDndStartTime(TsuryPhoneBaseTime):
             )
             await self.coordinator.async_request_refresh()
 
+    @property
+    def available(self) -> bool:
+        """Return if time entity is available (when DnD schedule is enabled)."""
+        if "dnd" in self.coordinator.data:
+            return self.coordinator.data["dnd"].get("schedule_enabled", False)
+        return False
+
 
 class TsuryPhoneDndEndTime(TsuryPhoneBaseTime):
     """Time entity for DnD end time."""
@@ -110,3 +117,10 @@ class TsuryPhoneDndEndTime(TsuryPhoneBaseTime):
                 value.minute
             )
             await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if time entity is available (when DnD schedule is enabled)."""
+        if "dnd" in self.coordinator.data:
+            return self.coordinator.data["dnd"].get("schedule_enabled", False)
+        return False
