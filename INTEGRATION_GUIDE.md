@@ -41,7 +41,7 @@ I've created a comprehensive Home Assistant integration for your TsuryPhone proj
 #### Full Platform Support
 - **Sensors**: Phone state, call info, statistics, hardware info
 - **Binary Sensors**: Call status, DnD status, WiFi connection, call waiting
-- **Buttons**: Hangup, reset, reboot actions
+- **Buttons**: Hangup, reset actions
 - **Switches**: DnD enable/disable
 - **Numbers**: DnD hour configuration
 - **Select**: Quick-dial from phonebook
@@ -66,7 +66,6 @@ I've created a comprehensive Home Assistant integration for your TsuryPhone proj
 - `POST /action/call` - Make a call (`number` parameter)
 - `POST /action/hangup` - Hang up current call
 - `POST /action/reset` - Reset device
-- `POST /action/reboot` - Reboot device
 
 ### Configuration
 - `POST /dnd` - Configure Do Not Disturb (enabled, hours)
@@ -147,7 +146,7 @@ Once installed, you'll have access to:
 ### Phonebook Integration
 - HA-managed phonebook entries work seamlessly with the dial pad
 - Quick-dial select entity for easy calling through HA
-- Phonebook changes are persistent and survive reboots
+- Phonebook changes are persistent and survive resets
 
 ### State Monitoring
 - Real-time phone state updates in HA

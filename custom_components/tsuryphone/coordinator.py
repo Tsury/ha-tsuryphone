@@ -21,6 +21,8 @@ from .const import (
     ENDPOINT_ACTION_HANGUP,
     ENDPOINT_ACTION_RESET,
     ENDPOINT_ACTION_RING,
+    ENDPOINT_ACTION_DOWNLOAD_MODE,
+    ENDPOINT_ACTION_SWITCH_CALL_WAITING,
     CONF_HOST,
     CONF_PORT,
 )
@@ -145,6 +147,14 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
     async def set_dnd_schedule_enabled(self, enabled: bool) -> None:
         """Enable or disable Do Not Disturb schedule."""
         await self._make_request("POST", ENDPOINT_DND, {"schedule_enabled": str(enabled).lower()})
+
+    async def set_download_mode(self, enabled: bool) -> None:
+        """Enable or disable download mode."""
+        await self._make_request("POST", ENDPOINT_ACTION_DOWNLOAD_MODE, {"enabled": str(enabled).lower()})
+
+    async def switch_to_call_waiting(self) -> None:
+        """Switch to call waiting."""
+        await self._make_request("POST", ENDPOINT_ACTION_SWITCH_CALL_WAITING)
 
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, str] = None) -> None:
         """Make a request to the device."""

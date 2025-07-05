@@ -22,7 +22,7 @@ TsuryPhone is a vintage rotary phone converted to work with modern cellular netw
 ### 🎮 Controls
 - **Call Management**: Make calls, hang up, call from phonebook
 - **Do Not Disturb**: Enable/disable DnD with custom time schedules
-- **Device Management**: Reset, reboot, ring device remotely
+- **Device Management**: Reset, ring device remotely
 - **Phonebook Management**: Add/remove contacts via services
 - **Call Screening**: Block unwanted numbers
 
@@ -37,7 +37,7 @@ TsuryPhone is a vintage rotary phone converted to work with modern cellular netw
 - Call active, DnD status, WiFi connected, call waiting
 
 #### Controls (4)
-- Buttons: Hangup, Reset, Reboot, Ring
+- Buttons: Hangup, Reset, Ring
 - Switch: Do Not Disturb toggle
 - Numbers: DnD time configuration (4 entities)
 - Select: Phonebook contacts for calling

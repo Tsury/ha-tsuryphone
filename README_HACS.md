@@ -52,7 +52,7 @@ Once added, you should see:
 ### Controls
 - **Call Management**: Make calls, hang up active calls
 - **Do Not Disturb**: Enable/disable DnD and configure hours
-- **Device Management**: Reset or reboot the device
+- **Device Management**: Reset the device
 - **Phonebook**: Add/remove phonebook entries via services
 - **Call Screening**: Block unwanted numbers
 
@@ -82,7 +82,6 @@ Once added, you should see:
 #### Buttons
 - `button.tsuryphone_hangup` - Hang up active call
 - `button.tsuryphone_reset` - Reset device
-- `button.tsuryphone_reboot` - Reboot device
 - `button.tsuryphone_ring` - Ring the device (5 seconds)
 
 #### Switches
@@ -287,7 +286,6 @@ The integration uses these REST API endpoints:
 - `POST /action/call` - Make a call
 - `POST /action/hangup` - Hang up
 - `POST /action/reset` - Reset device
-- `POST /action/reboot` - Reboot device
 - `POST /action/ring` - Ring device for specified duration
 
 ## Support

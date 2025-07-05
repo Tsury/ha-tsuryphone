@@ -25,8 +25,9 @@ async def async_setup_entry(
     entities = [
         TsuryPhoneHangupButton(coordinator),
         TsuryPhoneResetButton(coordinator),
-        TsuryPhoneRebootButton(coordinator),
         TsuryPhoneRingButton(coordinator),
+        TsuryPhoneSwitchCallWaitingButton(coordinator),
+        TsuryPhoneRefreshDataButton(coordinator),
     ]
 
     async_add_entities(entities)
@@ -86,20 +87,6 @@ class TsuryPhoneResetButton(TsuryPhoneBaseButton):
         await self.coordinator.reset_device()
 
 
-class TsuryPhoneRebootButton(TsuryPhoneBaseButton):
-    """Button to reboot the device."""
-
-    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
-        """Initialize the button."""
-        super().__init__(coordinator, "reboot")
-        self._attr_name = "TsuryPhone Reboot"
-        self._attr_icon = "mdi:power-cycle"
-
-    async def async_press(self) -> None:
-        """Handle the button press."""
-        await self.coordinator.reboot_device()
-
-
 class TsuryPhoneRingButton(TsuryPhoneBaseButton):
     """Button to ring the device for 5 seconds."""
 
@@ -114,3 +101,42 @@ class TsuryPhoneRingButton(TsuryPhoneBaseButton):
         # Ring for 5 seconds (5000ms) when button is pressed
         await self.coordinator.ring_device(5000)
         await self.coordinator.async_request_refresh()
+
+
+class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):
+    """Button to switch to call waiting."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the button."""
+        super().__init__(coordinator, "switch_call_waiting")
+        self._attr_name = "TsuryPhone Switch Call Waiting"
+        self._attr_icon = "mdi:phone-forward"
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self.coordinator.switch_to_call_waiting()
+        await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if button is available."""
+        if "status" in self.coordinator.data:
+            call = self.coordinator.data["status"].get("call", {})
+            # Only available when there's a call waiting
+            return call.get("has_call_waiting", False)
+        return False
+
+
+class TsuryPhoneRefreshDataButton(TsuryPhoneBaseButton):
+    """Button to refresh all data from the device."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the button."""
+        super().__init__(coordinator, "refresh_data")
+        self._attr_name = "TsuryPhone Refresh Data"
+        self._attr_icon = "mdi:refresh"
+
+    async def async_press(self) -> None:
+        """Handle the button press."""
+        await self.coordinator.async_request_refresh()
+        _LOGGER.info("Refreshed TsuryPhone data")

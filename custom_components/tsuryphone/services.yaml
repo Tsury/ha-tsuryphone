@@ -1,0 +1,245 @@
+# Services for TsuryPhone Integration
+
+call_number:
+  name: Call Number
+  description: Make a call to the specified number
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    number:
+      name: Phone Number
+      description: The phone number to call
+      required: true
+      selector:
+        text:
+
+hangup:
+  name: Hangup Call
+  description: Hang up the current active call
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+
+ring_device:
+  name: Ring Device
+  description: Ring the TsuryPhone device for a specified duration
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    duration:
+      name: Duration (ms)
+      description: Ring duration in milliseconds
+      required: false
+      default: 5000
+      selector:
+        number:
+          min: 500
+          max: 30000
+          step: 500
+          unit_of_measurement: "ms"
+
+reset_device:
+  name: Reset Device
+  description: Reset the TsuryPhone device (soft reset)
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+
+set_download_mode:
+  name: Set Download Mode
+  description: Enable or disable download mode for firmware updates
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    enabled:
+      name: Enable Download Mode
+      description: Whether to enable or disable download mode
+      required: true
+      selector:
+        boolean:
+
+switch_to_call_waiting:
+  name: Switch to Call Waiting
+  description: Switch to the call waiting (if available)
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+
+add_phonebook_entry:
+  name: Add Phonebook Entry
+  description: Add a new entry to the phonebook
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    name:
+      name: Contact Name
+      description: The name for the phonebook entry
+      required: true
+      selector:
+        text:
+    number:
+      name: Phone Number
+      description: The phone number for the contact
+      required: true
+      selector:
+        text:
+
+remove_phonebook_entry:
+  name: Remove Phonebook Entry
+  description: Remove an entry from the phonebook
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    name:
+      name: Contact Name
+      description: The name of the contact to remove
+      required: true
+      selector:
+        text:
+
+add_screened_number:
+  name: Add Screened Number
+  description: Add a number to the blocked/screened list
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    number:
+      name: Phone Number
+      description: The phone number to block
+      required: true
+      selector:
+        text:
+
+remove_screened_number:
+  name: Remove Screened Number
+  description: Remove a number from the blocked/screened list
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    number:
+      name: Phone Number
+      description: The phone number to unblock
+      required: true
+      selector:
+        text:
+
+set_dnd_hours:
+  name: Set Do Not Disturb Hours
+  description: Configure the Do Not Disturb schedule hours
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    start_hour:
+      name: Start Hour
+      description: The hour when DnD starts (0-23)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 23
+          step: 1
+    start_minute:
+      name: Start Minute
+      description: The minute when DnD starts (0-59)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          step: 1
+    end_hour:
+      name: End Hour
+      description: The hour when DnD ends (0-23)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 23
+          step: 1
+    end_minute:
+      name: End Minute
+      description: The minute when DnD ends (0-59)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 59
+          step: 1
+
+set_dnd_force_enabled:
+  name: Set Do Not Disturb Force
+  description: Enable or disable force Do Not Disturb (overrides schedule)
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    enabled:
+      name: Enable Force DnD
+      description: Whether to enable or disable force Do Not Disturb
+      required: true
+      selector:
+        boolean:
+
+set_dnd_schedule_enabled:
+  name: Set Do Not Disturb Schedule
+  description: Enable or disable the Do Not Disturb schedule
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    enabled:
+      name: Enable DnD Schedule
+      description: Whether to enable or disable the DnD schedule
+      required: true
+      selector:
+        boolean:

@@ -18,7 +18,7 @@ Transform your classic rotary phone into a smart home device with this comprehen
 - **Phonebook management** with contact services
 - **Call screening** to block unwanted numbers  
 - **Real-time monitoring** of phone state and calls
-- **Device management** - reset, reboot, ring remotely
+- **Device management** - reset, ring remotely
 - **System statistics** - uptime, memory, call counters
 
 ### 📱 Perfect For

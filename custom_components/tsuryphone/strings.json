@@ -92,9 +92,6 @@
       "reset": {
         "name": "Reset"
       },
-      "reboot": {
-        "name": "Reboot"
-      },
       "ring": {
         "name": "Ring"
       }

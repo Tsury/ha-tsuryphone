@@ -25,6 +25,7 @@ async def async_setup_entry(
     entities = [
         TsuryPhoneDndForceSwitch(coordinator),
         TsuryPhoneDndScheduleSwitch(coordinator),
+        TsuryPhoneDownloadModeSwitch(coordinator),
     ]
 
     async_add_entities(entities)
@@ -98,4 +99,31 @@ class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off Do Not Disturb schedule."""
         await self.coordinator.set_dnd_schedule_enabled(False)
+        await self.coordinator.async_request_refresh()
+
+
+class TsuryPhoneDownloadModeSwitch(TsuryPhoneBaseSwitch):
+    """Switch to enable/disable download mode."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator, "download_mode")
+        self._attr_name = "TsuryPhone Download Mode"
+        self._attr_icon = "mdi:download"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if download mode is enabled."""
+        if "status" in self.coordinator.data:
+            return self.coordinator.data["status"].get("download_mode", False)
+        return False
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on download mode."""
+        await self.coordinator.set_download_mode(True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off download mode."""
+        await self.coordinator.set_download_mode(False)
         await self.coordinator.async_request_refresh()
