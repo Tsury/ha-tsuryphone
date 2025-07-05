@@ -60,8 +60,8 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Call Custom Number"
         self._attr_icon = "mdi:phone-dial"
         self._attr_mode = TextMode.TEXT
-        # More permissive pattern that allows common phone number formats
-        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
+        # More permissive pattern that allows common phone number formats and empty string
+        self._attr_pattern = r"^$|^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
         self._attr_extra_state_attributes = {
@@ -104,8 +104,8 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Add Phonebook Entry"
         self._attr_icon = "mdi:account-plus"
         self._attr_mode = TextMode.TEXT
-        # More flexible pattern for name and number combinations
-        self._attr_pattern = r"^.+:\s*.+$"
+        # More flexible pattern for name and number combinations, allow empty
+        self._attr_pattern = r"^$|^.+:\s*.+$"
         self._attr_native_value = ""
         self._attr_native_max = 60
         self._attr_extra_state_attributes = {
@@ -179,7 +179,7 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Add Blocked Number"
         self._attr_icon = "mdi:phone-off"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
+        self._attr_pattern = r"^$|^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
         self._attr_extra_state_attributes = {
@@ -213,7 +213,7 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Remove Blocked Number"
         self._attr_icon = "mdi:phone-check"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
+        self._attr_pattern = r"^$|^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
         self._attr_native_max = 25
         self._attr_extra_state_attributes = {
