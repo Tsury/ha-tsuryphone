@@ -14,7 +14,7 @@ This guide helps you prepare the TsuryPhone integration for HACS distribution.
 
 1. **Push to GitHub**:
    ```bash
-   git remote add origin https://github.com/Tsury/TsuryPhone.git
+   git remote add origin https://github.com/Tsury/ha-tsuryphone.git
    git push -u origin main
    ```
 
@@ -29,7 +29,7 @@ This guide helps you prepare the TsuryPhone integration for HACS distribution.
 #### Option A: Custom Repository (Immediate)
 Users can add immediately:
 1. HACS → Integrations → ⋮ → Custom repositories
-2. Repository: `https://github.com/Tsury/TsuryPhone`
+2. Repository: `https://github.com/Tsury/ha-tsuryphone`
 3. Category: Integration
 
 #### Option B: HACS Default (Recommended)

@@ -1,8 +1,8 @@
 # TsuryPhone Home Assistant Integration
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub Release](https://img.shields.io/github/release/Tsury/TsuryPhone.svg)](https://github.com/Tsury/TsuryPhone/releases)
-[![License](https://img.shields.io/github/license/Tsury/TsuryPhone.svg)](LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/Tsury/ha-tsuryphone.svg)](https://github.com/Tsury/ha-tsuryphone/releases)
+[![License](https://img.shields.io/github/license/Tsury/ha-tsuryphone.svg)](LICENSE)
 
 A comprehensive Home Assistant integration for controlling and monitoring your TsuryPhone vintage rotary phone device.
 
@@ -66,7 +66,7 @@ TsuryPhone is a vintage rotary phone converted to work with modern cellular netw
 #### Option B: Custom Repository
 1. Open HACS → **Integrations**
 2. Click **⋮** (menu) → **Custom repositories**
-3. Add repository: `https://github.com/Tsury/TsuryPhone`
+3. Add repository: `https://github.com/Tsury/ha-tsuryphone`
 4. Category: **Integration**
 5. Click **Add** → **Download**
 6. Restart Home Assistant
@@ -164,9 +164,9 @@ For complete documentation, automation examples, troubleshooting, and API refere
 - Verify device responds at `http://[device-ip]/status`
 
 ### Getting Help
-- 📋 [Issues](https://github.com/Tsury/TsuryPhone/issues)
-- 💬 [Discussions](https://github.com/Tsury/TsuryPhone/discussions)
-- 📖 [Wiki](https://github.com/Tsury/TsuryPhone/wiki)
+- 📋 [Issues](https://github.com/Tsury/ha-tsuryphone/issues)
+- 💬 [Discussions](https://github.com/Tsury/ha-tsuryphone/discussions)
+- 📖 [Wiki](https://github.com/Tsury/ha-tsuryphone/wiki)
 
 ## 🤝 Contributing
 

@@ -14,7 +14,7 @@ This custom integration allows you to control and monitor your TsuryPhone device
 2. **Add Custom Repository**:
    - Go to HACS → Integrations
    - Click ⋮ (menu) → Custom repositories
-   - Repository: `https://github.com/Tsury/TsuryPhone`
+   - Repository: `https://github.com/Tsury/ha-tsuryphone`
    - Category: Integration
 3. **Download Integration**:
    - Search for "TsuryPhone" in HACS
@@ -175,7 +175,7 @@ This integration is designed for easy installation via HACS:
 
 1. **Add to HACS**: 
    - HACS → Integrations → ⋮ → Custom repositories
-   - Repository: `https://github.com/Tsury/TsuryPhone` 
+   - Repository: `https://github.com/Tsury/ha-tsuryphone` 
    - Category: Integration
 2. **Download**: Search "TsuryPhone" and click Download
 3. **Restart** Home Assistant
