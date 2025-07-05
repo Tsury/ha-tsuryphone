@@ -113,10 +113,6 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         """Ring the device for specified duration."""
         await self._make_request("POST", ENDPOINT_ACTION_RING, {"duration": str(duration_ms)})
 
-    async def set_dnd_enabled(self, enabled: bool) -> None:
-        """Enable or disable Do Not Disturb."""
-        await self._make_request("POST", ENDPOINT_DND, {"enabled": str(enabled).lower()})
-
     async def set_dnd_hours(self, start_hour: int, start_minute: int, end_hour: int, end_minute: int) -> None:
         """Set Do Not Disturb hours."""
         data = {
@@ -146,6 +142,14 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         """Remove a screened (blocked) number."""
         data = {"action": "remove", "number": number}
         await self._make_request("POST", ENDPOINT_SCREENED, data)
+
+    async def set_dnd_force_enabled(self, enabled: bool) -> None:
+        """Enable or disable force Do Not Disturb."""
+        await self._make_request("POST", ENDPOINT_DND, {"force_enabled": str(enabled).lower()})
+
+    async def set_dnd_schedule_enabled(self, enabled: bool) -> None:
+        """Enable or disable Do Not Disturb schedule."""
+        await self._make_request("POST", ENDPOINT_DND, {"schedule_enabled": str(enabled).lower()})
 
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, str] = None) -> None:
         """Make a request to the device."""

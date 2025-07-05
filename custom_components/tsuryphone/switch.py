@@ -23,7 +23,8 @@ async def async_setup_entry(
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     entities = [
-        TsuryPhoneDndSwitch(coordinator),
+        TsuryPhoneDndForceSwitch(coordinator),
+        TsuryPhoneDndScheduleSwitch(coordinator),
     ]
 
     async_add_entities(entities)
@@ -46,28 +47,55 @@ class TsuryPhoneBaseSwitch(CoordinatorEntity, SwitchEntity):
         }
 
 
-class TsuryPhoneDndSwitch(TsuryPhoneBaseSwitch):
-    """Switch to control Do Not Disturb."""
+class TsuryPhoneDndForceSwitch(TsuryPhoneBaseSwitch):
+    """Switch to force Do Not Disturb on regardless of schedule."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the switch."""
-        super().__init__(coordinator, "dnd")
-        self._attr_name = "TsuryPhone Do Not Disturb"
-        self._attr_icon = "mdi:bell-off"
+        super().__init__(coordinator, "dnd_force")
+        self._attr_name = "TsuryPhone DnD Force"
+        self._attr_icon = "mdi:bell-off-outline"
 
     @property
     def is_on(self) -> bool:
-        """Return true if DnD is enabled."""
+        """Return true if DnD force is enabled."""
         if "dnd" in self.coordinator.data:
-            return self.coordinator.data["dnd"].get("enabled", False)
+            return self.coordinator.data["dnd"].get("force_enabled", False)
         return False
 
     async def async_turn_on(self, **kwargs: Any) -> None:
-        """Turn on Do Not Disturb."""
-        await self.coordinator.set_dnd_enabled(True)
+        """Turn on force Do Not Disturb."""
+        await self.coordinator.set_dnd_force_enabled(True)
         await self.coordinator.async_request_refresh()
 
     async def async_turn_off(self, **kwargs: Any) -> None:
-        """Turn off Do Not Disturb."""
-        await self.coordinator.set_dnd_enabled(False)
+        """Turn off force Do Not Disturb."""
+        await self.coordinator.set_dnd_force_enabled(False)
+        await self.coordinator.async_request_refresh()
+
+
+class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
+    """Switch to enable/disable Do Not Disturb schedule."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator, "dnd_schedule")
+        self._attr_name = "TsuryPhone DnD Schedule"
+        self._attr_icon = "mdi:calendar-clock"
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if DnD schedule is enabled."""
+        if "dnd" in self.coordinator.data:
+            return self.coordinator.data["dnd"].get("schedule_enabled", False)
+        return False
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn on Do Not Disturb schedule."""
+        await self.coordinator.set_dnd_schedule_enabled(True)
+        await self.coordinator.async_request_refresh()
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn off Do Not Disturb schedule."""
+        await self.coordinator.set_dnd_schedule_enabled(False)
         await self.coordinator.async_request_refresh()

@@ -109,7 +109,8 @@ class TsuryPhoneDndBinarySensor(TsuryPhoneBaseBinarySensor):
         
         dnd = self.coordinator.data["dnd"]
         return {
-            "config_enabled": dnd.get("enabled", False),
+            "force_enabled": dnd.get("force_enabled", False),
+            "schedule_enabled": dnd.get("schedule_enabled", False),
             "currently_active": dnd.get("currently_active", False),
             "start_time": f"{dnd.get('start_hour', 0):02d}:{dnd.get('start_minute', 0):02d}",
             "end_time": f"{dnd.get('end_hour', 0):02d}:{dnd.get('end_minute', 0):02d}",

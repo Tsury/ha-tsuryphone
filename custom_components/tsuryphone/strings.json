@@ -100,22 +100,19 @@
       }
     },
     "switch": {
-      "dnd": {
-        "name": "Do Not Disturb"
+      "dnd_force": {
+        "name": "DnD Force"
+      },
+      "dnd_schedule": {
+        "name": "DnD Schedule"
       }
     },
-    "number": {
-      "dnd_start_hour": {
-        "name": "DnD Start Hour"
+    "time": {
+      "dnd_start_time": {
+        "name": "DnD Start Time"
       },
-      "dnd_start_minute": {
-        "name": "DnD Start Minute"
-      },
-      "dnd_end_hour": {
-        "name": "DnD End Hour"
-      },
-      "dnd_end_minute": {
-        "name": "DnD End Minute"
+      "dnd_end_time": {
+        "name": "DnD End Time"
       }
     },
     "select": {
