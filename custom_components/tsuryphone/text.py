@@ -57,28 +57,35 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "call_number")
-        self._attr_name = "TsuryPhone Call Number"
+        self._attr_name = "TsuryPhone Call Custom Number"
         self._attr_icon = "mdi:phone-dial"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\d\+\-\(\)\s]+$"
+        # More permissive pattern that allows common phone number formats
+        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
-        self._attr_native_max = 20
+        self._attr_native_max = 25
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and make the call."""
-        # Clean the number (remove spaces, brackets, etc. but keep digits and +)
-        clean_number = re.sub(r'[^\d\+]', '', value)
+        # Clean the number (remove spaces, brackets, etc. but keep digits, + and # for special codes)
+        clean_number = re.sub(r'[^\d\+#\*]', '', value)
         
         if clean_number:
             try:
                 await self.coordinator.call_number(clean_number)
                 _LOGGER.info("Called number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after calling
+                await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to call number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""
+
+    @property
+    def entity_description(self) -> str:
+        """Return entity description."""
+        return "Enter phone number to call (e.g., +1234567890 or *67)"
 
     @property
     def available(self) -> bool:
@@ -99,9 +106,10 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Add Phonebook Entry"
         self._attr_icon = "mdi:account-plus"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\w\s]+:\s*[\d\+\-\(\)\s]+$"
+        # More flexible pattern for name and number combinations
+        self._attr_pattern = r"^.+:\s*.+$"
         self._attr_native_value = ""
-        self._attr_native_max = 50
+        self._attr_native_max = 60
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and add phonebook entry."""
@@ -110,7 +118,7 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
             parts = value.split(":", 1)
             if len(parts) == 2:
                 name = parts[0].strip()
-                number = re.sub(r'[^\d\+]', '', parts[1].strip())
+                number = re.sub(r'[^\d\+#\*]', '', parts[1].strip())
                 
                 if name and number:
                     try:
@@ -131,7 +139,7 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
     @property
     def entity_description(self) -> str:
         """Return entity description."""
-        return "Format: Name: Number (e.g., 'John: +1234567890')"
+        return "Format: 'Name: Number' (e.g., 'John Smith: +1234567890')"
 
 
 class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
@@ -174,17 +182,17 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "add_screened")
-        self._attr_name = "TsuryPhone Add Screened Number"
+        self._attr_name = "TsuryPhone Add Blocked Number"
         self._attr_icon = "mdi:phone-off"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\d\+\-\(\)\s]+$"
+        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
-        self._attr_native_max = 20
+        self._attr_native_max = 25
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and add screened number."""
-        # Clean the number (remove spaces, brackets, etc. but keep digits and +)
-        clean_number = re.sub(r'[^\d\+]', '', value)
+        # Clean the number (remove spaces, brackets, etc. but keep digits, + and special codes)
+        clean_number = re.sub(r'[^\d\+#\*]', '', value)
         
         if clean_number:
             try:
@@ -210,17 +218,17 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "remove_screened")
-        self._attr_name = "TsuryPhone Remove Screened Number"
+        self._attr_name = "TsuryPhone Remove Blocked Number"
         self._attr_icon = "mdi:phone-check"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^[\d\+\-\(\)\s]+$"
+        self._attr_pattern = r"^[\d\+\-\(\)\s\.#\*]+$"
         self._attr_native_value = ""
-        self._attr_native_max = 20
+        self._attr_native_max = 25
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and remove screened number."""
-        # Clean the number (remove spaces, brackets, etc. but keep digits and +)
-        clean_number = re.sub(r'[^\d\+]', '', value)
+        # Clean the number (remove spaces, brackets, etc. but keep digits, + and special codes)
+        clean_number = re.sub(r'[^\d\+#\*]', '', value)
         
         if clean_number:
             try:

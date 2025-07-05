@@ -88,7 +88,7 @@ class TsuryPhoneResetButton(TsuryPhoneBaseButton):
 
 
 class TsuryPhoneRingButton(TsuryPhoneBaseButton):
-    """Button to ring the device for 5 seconds."""
+    """Button to ring the device."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
@@ -98,9 +98,22 @@ class TsuryPhoneRingButton(TsuryPhoneBaseButton):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        # Ring for 5 seconds (5000ms) when button is pressed
-        await self.coordinator.ring_device(5000)
+        # Get ring duration from the number entity, default to 5 seconds if not available
+        duration_ms = 5000
+        
+        # Try to get from number entity
+        hass = self.coordinator.hass
+        number_entity_id = f"number.tsuryphone_ring_duration_seconds"
+        number_state = hass.states.get(number_entity_id)
+        if number_state and number_state.state:
+            try:
+                duration_ms = int(float(number_state.state) * 1000)
+            except (ValueError, TypeError):
+                duration_ms = 5000
+        
+        await self.coordinator.ring_device(duration_ms)
         await self.coordinator.async_request_refresh()
+        _LOGGER.info("Rang device for %d ms", duration_ms)
 
 
 class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):

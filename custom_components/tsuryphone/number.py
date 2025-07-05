@@ -62,17 +62,11 @@ class TsuryPhoneRingDurationNumber(TsuryPhoneBaseNumber):
         self._attr_native_unit_of_measurement = "s"
 
     async def async_set_native_value(self, value: float) -> None:
-        """Set the value and ring the device."""
-        duration_ms = int(value * 1000)  # Convert seconds to milliseconds
-        
-        try:
-            await self.coordinator.ring_device(duration_ms)
-            self._attr_native_value = value
-            _LOGGER.info("Rang device for %d seconds (%d ms)", value, duration_ms)
-        except Exception as err:
-            _LOGGER.error("Failed to ring device for %d seconds: %s", value, err)
+        """Set the ring duration value (does not ring automatically)."""
+        self._attr_native_value = value
+        _LOGGER.info("Set ring duration to %d seconds", value)
 
     @property
     def entity_description(self) -> str:
         """Return entity description."""
-        return "Set ring duration in seconds and ring the device"
+        return "Set ring duration in seconds (use Ring button to ring)"
