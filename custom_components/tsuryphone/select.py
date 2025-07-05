@@ -70,9 +70,9 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
                     options.append(f"📞 {entry['name']} ({entry['number']})")
                 
                 options.append("--- Remove Contact ---")
-                # Only show remove options
+                # Only show remove options with phone numbers for clarity
                 for entry in entries:
-                    options.append(f"🗑️ {entry['name']}")
+                    options.append(f"🗑️ {entry['name']} ({entry['number']})")
             else:
                 options.append("No contacts in phonebook")
         
@@ -99,8 +99,11 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
                 await self.coordinator.async_request_refresh()
         
         elif option.startswith("🗑️ "):
-            # Extract name and remove from phonebook
+            # Extract name and remove from phonebook (handle name with phone number format)
             name = option.replace("🗑️ ", "")
+            # If format is "Name (Number)", extract just the name
+            if " (" in name and name.endswith(")"):
+                name = name.split(" (")[0]
             await self.coordinator.remove_phonebook_entry(name)
             _LOGGER.info("Removed %s from phonebook", name)
             await self.coordinator.async_request_refresh()
