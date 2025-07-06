@@ -329,7 +329,6 @@ I've successfully modified the codebase so that when Home Assistant integration 
 **When `HOME_ASSISTANT_INTEGRATION` is NOT defined:**
 - ✅ **Phonebook**: Uses local generated phonebook (no change)
 - ✅ **DnD**: Uses local config.h DnD settings (no change)
-- ✅ **Backward compatibility**: All existing functionality preserved
 
 ### 🎮 **User Experience:**
 

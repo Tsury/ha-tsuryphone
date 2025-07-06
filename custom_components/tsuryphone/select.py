@@ -84,11 +84,12 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
         if option in ["Select quick dial to call...", "No quick dial entries"]:
             return
             
-        # Format: "45: +1234567890"
+        # Format: "211: 0546662771"
         if ": " in option:
-            entry_number = option.split(": ")[0]
-            await self.coordinator.call_number(entry_number)
-            _LOGGER.info("Called quick dial %s from phonebook", entry_number)
+            entry_name = option.split(": ")[0]
+            phone_number = option.split(": ")[1]
+            await self.coordinator.call_number(phone_number)
+            _LOGGER.info("Called quick dial %s (%s) from phonebook", entry_name, phone_number)
             await self.coordinator.async_request_refresh()
 
     @property

@@ -26,7 +26,7 @@ async def async_setup_entry(
     entities = [
         TsuryPhoneCallNumberText(coordinator),
         TsuryPhoneAddPhonebookText(coordinator),
-        TsuryPhoneAddScreenedText(coordinator),
+        TsuryPhoneAddBlockedText(coordinator),
     ]
 
     async_add_entities(entities)
@@ -168,12 +168,12 @@ class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
             self._attr_native_value = ""
 
 
-class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
-    """Text entity for adding screened numbers."""
+class TsuryPhoneAddBlockedText(TsuryPhoneBaseText):
+    """Text entity for adding blocked numbers."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
-        super().__init__(coordinator, "add_screened")
+        super().__init__(coordinator, "add_blocked")
         self._attr_name = "Add Blocked Number"
         self._attr_icon = "mdi:phone-off"
         self._attr_mode = TextMode.TEXT
@@ -185,29 +185,29 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
         }
 
     async def async_set_value(self, value: str) -> None:
-        """Set the text value and add screened number."""
+        """Set the text value and add blocked number."""
         # Clean the number (remove spaces, brackets, etc. but keep digits, + and special codes)
         clean_number = re.sub(r'[^\d\+#\*]', '', value)
         
         if clean_number:
             try:
                 await self.coordinator.add_blocked_number(clean_number)
-                _LOGGER.info("Added screened number: %s", clean_number)
+                _LOGGER.info("Added blocked number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after adding
                 await self.coordinator.async_request_refresh()
             except Exception as err:
-                _LOGGER.error("Failed to add screened number %s: %s", clean_number, err)
+                _LOGGER.error("Failed to add blocked number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""
 
 
-class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
-    """Text entity for removing screened numbers."""
+class TsuryPhoneRemoveBlockedText(TsuryPhoneBaseText):
+    """Text entity for removing blocked numbers."""
 
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
-        super().__init__(coordinator, "remove_screened")
+        super().__init__(coordinator, "remove_blocked")
         self._attr_name = "TsuryPhone Remove Blocked Number"
         self._attr_icon = "mdi:phone-check"
         self._attr_mode = TextMode.TEXT
@@ -219,18 +219,18 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
         }
 
     async def async_set_value(self, value: str) -> None:
-        """Set the text value and remove screened number."""
+        """Set the text value and remove blocked number."""
         # Clean the number (remove spaces, brackets, etc. but keep digits, + and special codes)
         clean_number = re.sub(r'[^\d\+#\*]', '', value)
         
         if clean_number:
             try:
                 await self.coordinator.remove_blocked_number(clean_number)
-                _LOGGER.info("Removed screened number: %s", clean_number)
+                _LOGGER.info("Removed blocked number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after removing
                 await self.coordinator.async_request_refresh()
             except Exception as err:
-                _LOGGER.error("Failed to remove screened number %s: %s", clean_number, err)
+                _LOGGER.error("Failed to remove blocked number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""

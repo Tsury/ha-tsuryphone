@@ -139,7 +139,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         """Make a call to the specified number."""
         await self._make_request("POST", ENDPOINT_ACTION_CALL, {"number": number})
         
-        # Add outgoing call to log immediately
+        # Add outgoing call to log
         await self._add_call_log_entry("outgoing", number, 0, "Calling")
         
         await self.async_request_refresh()
