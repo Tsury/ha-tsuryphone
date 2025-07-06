@@ -20,7 +20,8 @@ CONF_PORT = "port"
 
 # Default values
 DEFAULT_PORT = 80
-DEFAULT_SCAN_INTERVAL = 30
+DEFAULT_SCAN_INTERVAL = 30  # Normal polling interval
+FAST_REFRESH_INTERVAL = 1    # Fast refresh interval after actions
 
 # Device info
 MANUFACTURER = "TsuryPhone Project"
@@ -31,7 +32,7 @@ ENDPOINT_STATUS = "/status"
 ENDPOINT_STATS = "/stats"
 ENDPOINT_DND = "/dnd"
 ENDPOINT_PHONEBOOK = "/phonebook"
-ENDPOINT_SCREENED = "/screened"
+ENDPOINT_BLOCKED = "/blocked"
 ENDPOINT_ACTION_CALL = "/action/call"
 ENDPOINT_ACTION_HANGUP = "/action/hangup"
 ENDPOINT_ACTION_RESET = "/action/reset"

@@ -17,11 +17,12 @@ SERVICE_SET_MAINTENANCE_MODE = "set_maintenance_mode"
 SERVICE_SWITCH_TO_CALL_WAITING = "switch_to_call_waiting"
 SERVICE_ADD_PHONEBOOK_ENTRY = "add_phonebook_entry"
 SERVICE_REMOVE_PHONEBOOK_ENTRY = "remove_phonebook_entry"
-SERVICE_ADD_SCREENED_NUMBER = "add_screened_number"
-SERVICE_REMOVE_SCREENED_NUMBER = "remove_screened_number"
+SERVICE_ADD_BLOCKED_NUMBER = "add_blocked_number"
+SERVICE_REMOVE_BLOCKED_NUMBER = "remove_blocked_number"
 SERVICE_SET_DND_HOURS = "set_dnd_hours"
 SERVICE_SET_DND_FORCE_ENABLED = "set_dnd_force_enabled"
 SERVICE_SET_DND_SCHEDULE_ENABLED = "set_dnd_schedule_enabled"
+SERVICE_CLEAR_CALL_LOG = "clear_call_log"
 
 CALL_NUMBER_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
@@ -61,7 +62,7 @@ REMOVE_PHONEBOOK_ENTRY_SCHEMA = vol.Schema({
     vol.Required("name"): cv.string,
 })
 
-SCREENED_NUMBER_SCHEMA = vol.Schema({
+BLOCKED_NUMBER_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
     vol.Required("number"): cv.string,
 })
@@ -77,6 +78,10 @@ SET_DND_HOURS_SCHEMA = vol.Schema({
 SET_DND_ENABLED_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
     vol.Required("enabled"): cv.boolean,
+})
+
+CLEAR_CALL_LOG_SCHEMA = vol.Schema({
+    vol.Required("device_id"): cv.string,
 })
 
 
@@ -97,6 +102,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.call_number(number)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Called %s on device %s", number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -115,6 +121,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.ring_device(duration)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Rang device %s for %d ms", device_id, duration)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -134,6 +141,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_phonebook_entry(name, number)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Added phonebook entry %s: %s on device %s", name, number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -152,12 +160,13 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_phonebook_entry(name)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Removed phonebook entry %s on device %s", name, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
-    async def handle_add_screened_number(call: ServiceCall) -> None:
-        """Handle add screened number service."""
+    async def handle_add_blocked_number(call: ServiceCall) -> None:
+        """Handle add blocked number service."""
         device_id = call.data.get("device_id")
         number = call.data.get("number")
         
@@ -169,13 +178,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            await coordinator.add_screened_number(number)
-            _LOGGER.info("Added screened number %s on device %s", number, device_id)
+            await coordinator.add_blocked_number(number)
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Added blocked number %s on device %s", number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
-    async def handle_remove_screened_number(call: ServiceCall) -> None:
-        """Handle remove screened number service."""
+    async def handle_remove_blocked_number(call: ServiceCall) -> None:
+        """Handle remove blocked number service."""
         device_id = call.data.get("device_id")
         number = call.data.get("number")
         
@@ -187,8 +197,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            await coordinator.remove_screened_number(number)
-            _LOGGER.info("Removed screened number %s on device %s", number, device_id)
+            await coordinator.remove_blocked_number(number)
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Removed blocked number %s on device %s", number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
@@ -204,6 +215,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.hangup()
+            await coordinator.async_request_refresh()
             _LOGGER.info("Hung up call on device %s", device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -220,6 +232,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.reset_device()
+            await coordinator.async_request_refresh()
             _LOGGER.info("Reset device %s", device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -237,6 +250,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_maintenance_mode(enabled)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Set maintenance mode to %s on device %s", enabled, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -253,6 +267,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.switch_to_call_waiting()
+            await coordinator.async_request_refresh()
             _LOGGER.info("Switched to call waiting on device %s", device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -273,6 +288,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_hours(start_hour, start_minute, end_hour, end_minute)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Set DnD hours %02d:%02d to %02d:%02d on device %s", start_hour, start_minute, end_hour, end_minute, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -290,6 +306,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_force_enabled(enabled)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Set DnD force enabled to %s on device %s", enabled, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -307,7 +324,28 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_schedule_enabled(enabled)
+            await coordinator.async_request_refresh()
             _LOGGER.info("Set DnD schedule enabled to %s on device %s", enabled, device_id)
+        else:
+            _LOGGER.error("Device %s not found", device_id)
+
+    async def handle_clear_call_log(call: ServiceCall) -> None:
+        """Handle clear call log service."""
+        device_id = call.data.get("device_id")
+        
+        # Find coordinator for this device
+        coordinator = None
+        for entry_id, coord in hass.data[DOMAIN].items():
+            if hasattr(coord, "base_url") and device_id in coord.base_url:
+                coordinator = coord
+                break
+                
+        if coordinator:
+            # Clear the call log
+            coordinator._call_log = []
+            await coordinator._save_call_log()
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Cleared call log for device %s", device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
@@ -345,11 +383,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_ADD_SCREENED_NUMBER, handle_add_screened_number, schema=SCREENED_NUMBER_SCHEMA
+        DOMAIN, SERVICE_ADD_BLOCKED_NUMBER, handle_add_blocked_number, schema=BLOCKED_NUMBER_SCHEMA
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_REMOVE_SCREENED_NUMBER, handle_remove_screened_number, schema=SCREENED_NUMBER_SCHEMA
+        DOMAIN, SERVICE_REMOVE_BLOCKED_NUMBER, handle_remove_blocked_number, schema=BLOCKED_NUMBER_SCHEMA
     )
     
     hass.services.async_register(
@@ -363,6 +401,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_SET_DND_SCHEDULE_ENABLED, handle_set_dnd_schedule_enabled, schema=SET_DND_ENABLED_SCHEMA
     )
+    
+    hass.services.async_register(
+        DOMAIN, SERVICE_CLEAR_CALL_LOG, handle_clear_call_log, schema=CLEAR_CALL_LOG_SCHEMA
+    )
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
@@ -375,8 +417,9 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_SWITCH_TO_CALL_WAITING)
     hass.services.async_remove(DOMAIN, SERVICE_ADD_PHONEBOOK_ENTRY)
     hass.services.async_remove(DOMAIN, SERVICE_REMOVE_PHONEBOOK_ENTRY)
-    hass.services.async_remove(DOMAIN, SERVICE_ADD_SCREENED_NUMBER)
-    hass.services.async_remove(DOMAIN, SERVICE_REMOVE_SCREENED_NUMBER)
+    hass.services.async_remove(DOMAIN, SERVICE_ADD_BLOCKED_NUMBER)
+    hass.services.async_remove(DOMAIN, SERVICE_REMOVE_BLOCKED_NUMBER)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_HOURS)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_FORCE_ENABLED)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_SCHEDULE_ENABLED)
+    hass.services.async_remove(DOMAIN, SERVICE_CLEAR_CALL_LOG)

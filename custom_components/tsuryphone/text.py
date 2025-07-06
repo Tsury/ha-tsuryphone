@@ -191,7 +191,7 @@ class TsuryPhoneAddScreenedText(TsuryPhoneBaseText):
         
         if clean_number:
             try:
-                await self.coordinator.add_screened_number(clean_number)
+                await self.coordinator.add_blocked_number(clean_number)
                 _LOGGER.info("Added screened number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after adding
                 await self.coordinator.async_request_refresh()
@@ -225,7 +225,7 @@ class TsuryPhoneRemoveScreenedText(TsuryPhoneBaseText):
         
         if clean_number:
             try:
-                await self.coordinator.remove_screened_number(clean_number)
+                await self.coordinator.remove_blocked_number(clean_number)
                 _LOGGER.info("Removed screened number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after removing
                 await self.coordinator.async_request_refresh()

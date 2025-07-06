@@ -35,8 +35,10 @@ async def async_setup_entry(
         TsuryPhoneTotalCallsSensor(coordinator),
         TsuryPhoneIncomingCallsSensor(coordinator),
         TsuryPhoneOutgoingCallsSensor(coordinator),
+        TsuryPhoneBlockedCallsSensor(coordinator),
         TsuryPhoneResetsSensor(coordinator),
         TsuryPhoneCallNumberSensor(coordinator),
+        TsuryPhoneCallLogSensor(coordinator),
         TsuryPhoneCallIdSensor(coordinator),
         TsuryPhoneCpuFreqSensor(coordinator),
         TsuryPhoneFlashSizeSensor(coordinator),
@@ -233,6 +235,24 @@ class TsuryPhoneOutgoingCallsSensor(TsuryPhoneBaseSensor):
         return None
 
 
+class TsuryPhoneBlockedCallsSensor(TsuryPhoneBaseSensor):
+    """Sensor for blocked calls."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "blocked_calls")
+        self._attr_name = "TsuryPhone Blocked Calls"
+        self._attr_icon = "mdi:phone-off"
+        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the blocked calls."""
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("total_blocked_calls")
+        return None
+
+
 class TsuryPhoneResetsSensor(TsuryPhoneBaseSensor):
     """Sensor for device resets."""
 
@@ -343,3 +363,50 @@ class TsuryPhoneSketchSizeSensor(TsuryPhoneBaseSensor):
         if "stats" in self.coordinator.data:
             return self.coordinator.data["stats"].get("sketch_size")
         return None
+
+
+class TsuryPhoneCallLogSensor(TsuryPhoneBaseSensor):
+    """Sensor for call log."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "call_log")
+        self._attr_name = "TsuryPhone Call Log"
+        self._attr_icon = "mdi:phone-log"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the number of call log entries."""
+        if "call_log" in self.coordinator.data:
+            return len(self.coordinator.data["call_log"])
+        return 0
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return the call log as attributes."""
+        if "call_log" in self.coordinator.data:
+            call_log = self.coordinator.data["call_log"]
+            
+            # Return the most recent 10 entries and summary stats
+            recent_calls = call_log[:10] if len(call_log) > 10 else call_log
+            
+            # Calculate summary statistics
+            total_calls = len(call_log)
+            incoming_count = sum(1 for entry in call_log if entry.get("type") == "incoming")
+            outgoing_count = sum(1 for entry in call_log if entry.get("type") == "outgoing")
+            blocked_count = sum(1 for entry in call_log if entry.get("type") == "blocked")
+            
+            # Calculate total talk time
+            total_duration = sum(entry.get("duration", 0) for entry in call_log if entry.get("type") in ["incoming", "outgoing"])
+            
+            return {
+                "recent_calls": recent_calls,
+                "total_calls": total_calls,
+                "incoming_calls": incoming_count,
+                "outgoing_calls": outgoing_count,
+                "blocked_calls": blocked_count,
+                "total_talk_time_seconds": total_duration,
+                "total_talk_time_formatted": f"{total_duration // 3600:02d}:{(total_duration % 3600) // 60:02d}:{total_duration % 60:02d}",
+                "last_call": call_log[0] if call_log else None,
+            }
+        return {}

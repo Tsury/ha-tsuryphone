@@ -68,7 +68,7 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
             if entries:
                 # Only show call options - entry number and phone number
                 for entry in entries:
-                    options.append(f"📞 Dial {entry['name']} → {entry['number']}")
+                    options.append(f"{entry['name']}: {entry['number']}")
             else:
                 options.append("No quick dial entries")
         
@@ -84,14 +84,12 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
         if option in ["Select quick dial to call...", "No quick dial entries"]:
             return
             
-        if option.startswith("📞 Dial "):
-            # Extract the entry number (quick dial) to call
-            # Format: "📞 Dial 5 → +1234567890"
-            if " → " in option:
-                entry_number = option.split(" → ")[0].replace("📞 Dial ", "")
-                await self.coordinator.call_number(entry_number)
-                _LOGGER.info("Called quick dial %s from phonebook", entry_number)
-                await self.coordinator.async_request_refresh()
+        # Format: "45: +1234567890"
+        if ": " in option:
+            entry_number = option.split(": ")[0]
+            await self.coordinator.call_number(entry_number)
+            _LOGGER.info("Called quick dial %s from phonebook", entry_number)
+            await self.coordinator.async_request_refresh()
 
     @property
     def available(self) -> bool:
@@ -114,8 +112,8 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         options = ["Select blocked number action..."]
         
-        if "screened" in self.coordinator.data:
-            entries = self.coordinator.data["screened"].get("numbers", [])
+        if "blocked" in self.coordinator.data:
+            entries = self.coordinator.data["blocked"].get("blocked_numbers", [])
             if entries:
                 options.append("--- Unblock Number ---")
                 # Only show unblock options
@@ -137,9 +135,9 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
             return
             
         if option.startswith("✅ "):
-            # Remove the number from screened list
+            # Remove the number from blocked list
             number = option.replace("✅ ", "")
-            await self.coordinator.remove_screened_number(number)
+            await self.coordinator.remove_blocked_number(number)
             _LOGGER.info("Unblocked number: %s", number)
             await self.coordinator.async_request_refresh()
 
@@ -169,7 +167,7 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
             if entries:
                 # Show remove options with entry number and phone number for clarity
                 for entry in entries:
-                    options.append(f"🗑️ Entry {entry['name']} → {entry['number']}")
+                    options.append(f"🗑️ {entry['name']}: {entry['number']}")
             else:
                 options.append("No quick dial entries")
         
@@ -185,11 +183,11 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
         if option in ["Select quick dial to remove...", "No quick dial entries"]:
             return
             
-        if option.startswith("🗑️ Entry "):
+        if option.startswith("🗑️ "):
             # Extract entry number and remove from phonebook
-            # Format: "🗑️ Entry 5 → +1234567890"
-            if " → " in option:
-                entry_number = option.split(" → ")[0].replace("🗑️ Entry ", "")
+            # Format: "🗑️ 5: +1234567890"
+            if ": " in option:
+                entry_number = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_phonebook_entry(entry_number)
                 _LOGGER.info("Removed quick dial entry %s from phonebook", entry_number)
                 await self.coordinator.async_request_refresh()
@@ -215,8 +213,8 @@ class TsuryPhoneRemoveBlockedSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         options = ["Select number to unblock..."]
         
-        if "screened" in self.coordinator.data:
-            entries = self.coordinator.data["screened"].get("numbers", [])
+        if "blocked" in self.coordinator.data:
+            entries = self.coordinator.data["blocked"].get("blocked_numbers", [])
             if entries:
                 # Show unblock options
                 for entry in entries:
@@ -237,9 +235,9 @@ class TsuryPhoneRemoveBlockedSelect(TsuryPhoneBaseSelect):
             return
             
         if option.startswith("✅ "):
-            # Remove the number from screened list
+            # Remove the number from blocked list
             number = option.replace("✅ ", "")
-            await self.coordinator.remove_screened_number(number)
+            await self.coordinator.remove_blocked_number(number)
             _LOGGER.info("Unblocked number: %s", number)
             await self.coordinator.async_request_refresh()
 

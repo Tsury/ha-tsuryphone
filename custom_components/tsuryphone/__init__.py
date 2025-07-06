@@ -23,6 +23,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("Setting up TsuryPhone config entry")
     
     coordinator = TsuryPhoneDataUpdateCoordinator(hass, entry)
+    
+    # Set up the coordinator (including WebSocket and call log loading)
+    await coordinator.async_setup()
+    
     await coordinator.async_config_entry_first_refresh()
     
     hass.data.setdefault(DOMAIN, {})
@@ -41,6 +45,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     _LOGGER.debug("Unloading TsuryPhone config entry")
+    
+    # Get the coordinator and shut it down properly
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    await coordinator.async_shutdown()
     
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     
