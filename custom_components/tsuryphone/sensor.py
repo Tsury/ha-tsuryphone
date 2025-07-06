@@ -43,6 +43,8 @@ async def async_setup_entry(
         TsuryPhoneCpuFreqSensor(coordinator),
         TsuryPhoneFlashSizeSensor(coordinator),
         TsuryPhoneSketchSizeSensor(coordinator),
+        TsuryPhoneLastCallSensor(coordinator),
+        TsuryPhoneTotalTalkTimeSensor(coordinator),
     ]
 
     async_add_entities(entities)
@@ -408,5 +410,73 @@ class TsuryPhoneCallLogSensor(TsuryPhoneBaseSensor):
                 "total_talk_time_seconds": total_duration,
                 "total_talk_time_formatted": f"{total_duration // 3600:02d}:{(total_duration % 3600) // 60:02d}:{total_duration % 60:02d}",
                 "last_call": call_log[0] if call_log else None,
+            }
+        return {}
+
+class TsuryPhoneLastCallSensor(TsuryPhoneBaseSensor):
+    """Sensor for the last call details."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "last_call")
+        self._attr_name = "TsuryPhone Last Call"
+        self._attr_icon = "mdi:phone-recent"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the last call details."""
+        if "call_log" in self.coordinator.data and len(self.coordinator.data["call_log"]) > 0:
+            last_call = self.coordinator.data["call_log"][0]
+            return f"{last_call.get('type')} - {last_call.get('number')}"
+        return None
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return additional attributes for the last call."""
+        if "call_log" in self.coordinator.data and len(self.coordinator.data["call_log"]) > 0:
+            last_call = self.coordinator.data["call_log"][0]
+            return {
+                "call_type": last_call.get("type"),
+                "call_number": last_call.get("number"),
+                "call_id": last_call.get("id"),
+                "duration": last_call.get("duration"),
+                "timestamp": last_call.get("timestamp"),
+            }
+        return {}
+
+
+class TsuryPhoneTotalTalkTimeSensor(TsuryPhoneBaseSensor):
+    """Sensor for total talk time."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "total_talk_time")
+        self._attr_name = "TsuryPhone Total Talk Time"
+        self._attr_icon = "mdi:clock-time-four"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the total talk time in seconds."""
+        if "call_log" in self.coordinator.data:
+            total_duration = sum(entry.get("duration", 0) for entry in self.coordinator.data["call_log"] if entry.get("type") in ["incoming", "outgoing"])
+            return total_duration
+        return 0
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return total talk time formatted and as a breakdown by call type."""
+        if "call_log" in self.coordinator.data:
+            total_duration = sum(entry.get("duration", 0) for entry in self.coordinator.data["call_log"] if entry.get("type") in ["incoming", "outgoing"])
+            
+            incoming_duration = sum(entry.get("duration", 0) for entry in self.coordinator.data["call_log"] if entry.get("type") == "incoming")
+            outgoing_duration = sum(entry.get("duration", 0) for entry in self.coordinator.data["call_log"] if entry.get("type") == "outgoing")
+            
+            return {
+                "total_talk_time_seconds": total_duration,
+                "total_talk_time_formatted": f"{total_duration // 3600:02d}:{(total_duration % 3600) // 60:02d}:{total_duration % 60:02d}",
+                "incoming_talk_time_seconds": incoming_duration,
+                "incoming_talk_time_formatted": f"{incoming_duration // 3600:02d}:{(incoming_duration % 3600) // 60:02d}:{incoming_duration % 60:02d}",
+                "outgoing_talk_time_seconds": outgoing_duration,
+                "outgoing_talk_time_formatted": f"{outgoing_duration // 3600:02d}:{(outgoing_duration % 3600) // 60:02d}:{outgoing_duration % 60:02d}",
             }
         return {}
