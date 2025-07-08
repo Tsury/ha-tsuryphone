@@ -98,22 +98,33 @@ class TsuryPhoneRingButton(TsuryPhoneBaseButton):
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        # Get ring duration from the number entity, default to 5 seconds if not available
-        duration_ms = 5000
-        
-        # Try to get from number entity
+        # Try to get ring pattern from the text entity first
         hass = self.coordinator.hass
-        number_entity_id = f"number.tsuryphone_ring_duration_seconds"
-        number_state = hass.states.get(number_entity_id)
-        if number_state and number_state.state:
-            try:
-                duration_ms = int(float(number_state.state) * 1000)
-            except (ValueError, TypeError):
-                duration_ms = 5000
+        pattern_entity_id = f"text.tsuryphone_ring_pattern"
+        pattern_state = hass.states.get(pattern_entity_id)
         
-        await self.coordinator.ring_device(duration_ms)
+        if pattern_state and pattern_state.state and pattern_state.state.strip():
+            # Use ring pattern if available
+            pattern = pattern_state.state.strip()
+            await self.coordinator.ring_device_with_pattern(pattern)
+            _LOGGER.info("Rang device with pattern: %s", pattern)
+        else:
+            # Fall back to duration-based ring for backward compatibility
+            duration_ms = 5000
+            
+            # Try to get from number entity
+            number_entity_id = f"number.tsuryphone_ring_duration_seconds"
+            number_state = hass.states.get(number_entity_id)
+            if number_state and number_state.state:
+                try:
+                    duration_ms = int(float(number_state.state) * 1000)
+                except (ValueError, TypeError):
+                    duration_ms = 5000
+            
+            await self.coordinator.ring_device(duration_ms)
+            _LOGGER.info("Rang device for %d ms", duration_ms)
+        
         await self.coordinator.async_request_refresh()
-        _LOGGER.info("Rang device for %d ms", duration_ms)
 
 
 class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):

@@ -11,9 +11,35 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
-from .const import DOMAIN, CONF_HOST, CONF_PORT, DEFAULT_PORT
+from .const import (
+    DOMAIN, 
+    CONF_HOST, 
+    CONF_PORT, 
+    CONF_HA_SERVER_URL, 
+    CONF_HA_SERVER_PORT,
+    DEFAULT_PORT,
+    DEFAULT_HA_SERVER_PORT
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def get_ha_server_url(hass: HomeAssistant, port: int = None) -> str:
+    """Get the Home Assistant server URL."""
+    if port is None:
+        port = DEFAULT_HA_SERVER_PORT
+    
+    # Try to get the external URL first
+    if hass.config.external_url:
+        return hass.config.external_url
+    
+    # Fall back to internal URL
+    if hass.config.internal_url:
+        return hass.config.internal_url
+    
+    # Last resort - construct from local IP
+    return f"http://homeassistant.local:{port}"
+
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
@@ -21,6 +47,17 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
     }
 )
+
+
+def get_ha_server_step_schema(hass: HomeAssistant) -> vol.Schema:
+    """Get the schema for the HA server configuration step."""
+    default_url = get_ha_server_url(hass)
+    return vol.Schema(
+        {
+            vol.Required(CONF_HA_SERVER_URL, default=default_url): cv.string,
+            vol.Required(CONF_HA_SERVER_PORT, default=DEFAULT_HA_SERVER_PORT): cv.port,
+        }
+    )
 
 
 async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str, Any]:
@@ -36,12 +73,12 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
                 device_info = await response.json()
                 
                 # Validate this is actually a TsuryPhone device
-                if "device" not in device_info or device_info.get("device", {}).get("model") != "TsuryPhone":
+                if "device" not in device_info or device_info.get("device") != "TsuryPhone":
                     raise InvalidDevice
                 
                 return {
-                    "title": device_info.get("device", {}).get("name", "TsuryPhone"),
-                    "device_info": device_info["device"]
+                    "title": "TsuryPhone",
+                    "device_info": device_info
                 }
                 
     except asyncio.TimeoutError:
@@ -54,6 +91,11 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for TsuryPhone."""
 
     VERSION = 1
+
+    def __init__(self):
+        """Initialize the config flow."""
+        self._device_info = None
+        self._device_config = None
 
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
@@ -76,18 +118,87 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            # Create unique ID based on device info
-            device_info = info["device_info"]
-            unique_id = device_info.get("mac", f"{user_input[CONF_HOST]}_{user_input[CONF_PORT]}")
+            # Store device info for next step
+            self._device_info = info
+            self._device_config = user_input
             
-            await self.async_set_unique_id(unique_id)
-            self._abort_if_unique_id_configured()
-
-            return self.async_create_entry(title=info["title"], data=user_input)
+            # Move to HA server configuration step
+            return await self.async_step_ha_server()
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
         )
+
+    async def async_step_ha_server(
+        self, user_input: Optional[Dict[str, Any]] = None
+    ) -> FlowResult:
+        """Handle the HA server configuration step."""
+        if user_input is None:
+            return self.async_show_form(
+                step_id="ha_server", 
+                data_schema=get_ha_server_step_schema(self.hass),
+                description_placeholders={
+                    "device_name": self._device_info["title"]
+                }
+            )
+
+        errors = {}
+
+        try:
+            # Combine device and HA server configuration
+            combined_config = {**self._device_config, **user_input}
+            
+            # Send HA server configuration to device
+            await self._configure_device_ha_server(combined_config)
+            
+            # Create unique ID based on device info
+            device_info = self._device_info["device_info"]
+            unique_id = f"{self._device_config[CONF_HOST]}_{self._device_config[CONF_PORT]}"
+            
+            await self.async_set_unique_id(unique_id)
+            self._abort_if_unique_id_configured()
+
+            return self.async_create_entry(
+                title=self._device_info["title"], 
+                data=combined_config
+            )
+            
+        except Exception:  # pylint: disable=broad-except
+            _LOGGER.exception("Unexpected exception during HA server configuration")
+            errors["base"] = "unknown"
+
+        return self.async_show_form(
+            step_id="ha_server", 
+            data_schema=get_ha_server_step_schema(self.hass),
+            errors=errors,
+            description_placeholders={
+                "device_name": self._device_info["title"]
+            }
+        )
+
+    async def _configure_device_ha_server(self, config: Dict[str, Any]) -> None:
+        """Configure the HA server URL on the device."""
+        host = config[CONF_HOST]
+        port = config[CONF_PORT]
+        ha_server_url = config[CONF_HA_SERVER_URL]
+        ha_server_port = config[CONF_HA_SERVER_PORT]
+        
+        # Construct the full HA server URL
+        if not ha_server_url.startswith(('http://', 'https://')):
+            ha_server_url = f"http://{ha_server_url}"
+        
+        # Add port if not already included
+        if ':' not in ha_server_url.split('//')[-1]:
+            ha_server_url = f"{ha_server_url}:{ha_server_port}"
+        
+        # Send configuration to device
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            url = f"http://{host}:{port}/webhooks"
+            data = {"server_url": ha_server_url}
+            
+            async with session.post(url, json=data) as response:
+                response.raise_for_status()
+                _LOGGER.info("Successfully configured HA server URL on TsuryPhone device")
 
 
 class CannotConnect(HomeAssistantError):

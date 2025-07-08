@@ -21,14 +21,28 @@ from .const import (
     ENDPOINT_DND,
     ENDPOINT_PHONEBOOK,
     ENDPOINT_BLOCKED,
-    ENDPOINT_ACTION_CALL,
-    ENDPOINT_ACTION_HANGUP,
-    ENDPOINT_ACTION_RESET,
-    ENDPOINT_ACTION_RING,
-    ENDPOINT_ACTION_MAINTENANCE_MODE,
-    ENDPOINT_ACTION_SWITCH_CALL_WAITING,
+    ENDPOINT_WEBHOOKS,
+    ENDPOINT_ACTION,
+    ACTION_CALL,
+    ACTION_HANGUP,
+    ACTION_RING,
+    ACTION_RING_PATTERN,
+    ACTION_DND,
+    ACTION_DND_SCHEDULE,
+    ACTION_QUICK_DIAL_ADD,
+    ACTION_QUICK_DIAL_REMOVE,
+    ACTION_BLOCKED_ADD,
+    ACTION_BLOCKED_REMOVE,
+    ACTION_WEBHOOK_ADD,
+    ACTION_WEBHOOK_REMOVE,
+    ACTION_CALL_WAITING,
+    ACTION_REFRESH,
+    ACTION_MAINTENANCE,
+    ACTION_RESET,
     CONF_HOST,
     CONF_PORT,
+    CONF_HA_SERVER_URL,
+    CONF_HA_SERVER_PORT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,6 +71,10 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         self._websocket = None
         self._websocket_task = None
         self._last_stats = {}
+        
+        # HA server configuration (for webhooks)
+        self.ha_server_url = entry.data.get(CONF_HA_SERVER_URL, "")
+        self.ha_server_port = entry.data.get(CONF_HA_SERVER_PORT, 8123)
         
         # Call log storage
         self._call_log_store = Store(hass, 1, f"{DOMAIN}_call_log_{entry.entry_id}")
@@ -89,9 +107,10 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                 dnd_task = self._fetch_endpoint(session, ENDPOINT_DND)
                 phonebook_task = self._fetch_endpoint(session, ENDPOINT_PHONEBOOK)
                 blocked_task = self._fetch_endpoint(session, ENDPOINT_BLOCKED)
+                webhooks_task = self._fetch_endpoint(session, ENDPOINT_WEBHOOKS)
                 
-                status, stats, dnd, phonebook, blocked = await asyncio.gather(
-                    status_task, stats_task, dnd_task, phonebook_task, blocked_task,
+                status, stats, dnd, phonebook, blocked, webhooks = await asyncio.gather(
+                    status_task, stats_task, dnd_task, phonebook_task, blocked_task, webhooks_task,
                     return_exceptions=True
                 )
                 
@@ -108,6 +127,8 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                     data["phonebook"] = phonebook
                 if not isinstance(blocked, Exception):
                     data["blocked"] = blocked
+                if not isinstance(webhooks, Exception):
+                    data["webhooks"] = webhooks
                 
                 # Add call log to data
                 data["call_log"] = await self.get_call_log()
@@ -137,7 +158,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def call_number(self, number: str) -> None:
         """Make a call to the specified number."""
-        await self._make_request("POST", ENDPOINT_ACTION_CALL, {"number": number})
+        await self._make_action_request(ACTION_CALL, {"number": number})
         
         # Add outgoing call to log
         await self._add_call_log_entry("outgoing", number, 0, "Calling")
@@ -146,17 +167,22 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def hangup(self) -> None:
         """Hang up the current call."""
-        await self._make_request("POST", ENDPOINT_ACTION_HANGUP)
+        await self._make_action_request(ACTION_HANGUP)
         await self.async_request_refresh()
 
     async def reset_device(self) -> None:
         """Reset the device."""
-        await self._make_request("POST", ENDPOINT_ACTION_RESET)
+        await self._make_action_request(ACTION_RESET)
         await self.async_request_refresh()
 
     async def ring_device(self, duration_ms: int) -> None:
         """Ring the device for specified duration."""
-        await self._make_request("POST", ENDPOINT_ACTION_RING, {"duration": duration_ms})
+        await self._make_action_request(ACTION_RING, {"duration": duration_ms})
+        await self.async_request_refresh()
+
+    async def ring_device_with_pattern(self, pattern: str) -> None:
+        """Ring the device with a specific pattern."""
+        await self._make_action_request(ACTION_RING_PATTERN, {"pattern": pattern})
         await self.async_request_refresh()
 
     async def set_dnd_hours(self, start_hour: int, start_minute: int, end_hour: int, end_minute: int) -> None:
@@ -172,47 +198,65 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def add_phonebook_entry(self, name: str, number: str) -> None:
         """Add a phonebook entry."""
-        data = {"action": "add", "name": name, "number": number}
-        await self._make_request("POST", ENDPOINT_PHONEBOOK, data)
+        await self._make_action_request(ACTION_QUICK_DIAL_ADD, {"name": name, "number": number})
         await self.async_request_refresh()
 
     async def remove_phonebook_entry(self, name: str) -> None:
         """Remove a phonebook entry."""
-        data = {"action": "remove", "name": name}
-        await self._make_request("POST", ENDPOINT_PHONEBOOK, data)
+        await self._make_action_request(ACTION_QUICK_DIAL_REMOVE, {"name": name})
         await self.async_request_refresh()
 
     async def add_blocked_number(self, number: str) -> None:
         """Add a blocked number."""
-        data = {"action": "add", "number": number}
-        await self._make_request("POST", ENDPOINT_BLOCKED, data)
+        await self._make_action_request(ACTION_BLOCKED_ADD, {"number": number})
         await self.async_request_refresh()
 
     async def remove_blocked_number(self, number: str) -> None:
         """Remove a blocked number."""
-        data = {"action": "remove", "number": number}
-        await self._make_request("POST", ENDPOINT_BLOCKED, data)
+        await self._make_action_request(ACTION_BLOCKED_REMOVE, {"number": number})
+        await self.async_request_refresh()
+
+    async def add_webhook_shortcut(self, name: str, url: str) -> None:
+        """Add a webhook shortcut."""
+        await self._make_action_request(ACTION_WEBHOOK_ADD, {"name": name, "url": url})
+        await self.async_request_refresh()
+
+    async def remove_webhook_shortcut(self, name: str) -> None:
+        """Remove a webhook shortcut."""
+        await self._make_action_request(ACTION_WEBHOOK_REMOVE, {"name": name})
         await self.async_request_refresh()
 
     async def set_dnd_force_enabled(self, enabled: bool) -> None:
         """Enable or disable force Do Not Disturb."""
-        await self._make_request("POST", ENDPOINT_DND, {"force_enabled": enabled})
+        await self._make_action_request(ACTION_DND, {"enabled": enabled})
         await self.async_request_refresh()
 
     async def set_dnd_schedule_enabled(self, enabled: bool) -> None:
         """Enable or disable Do Not Disturb schedule."""
-        await self._make_request("POST", ENDPOINT_DND, {"schedule_enabled": enabled})
+        await self._make_action_request(ACTION_DND_SCHEDULE, {"enabled": enabled})
         await self.async_request_refresh()
 
     async def set_maintenance_mode(self, enabled: bool) -> None:
         """Enable or disable maintenance mode."""
-        await self._make_request("POST", ENDPOINT_ACTION_MAINTENANCE_MODE, {"enabled": enabled})
+        await self._make_action_request(ACTION_MAINTENANCE, {"enabled": enabled})
         await self.async_request_refresh()
 
     async def switch_to_call_waiting(self) -> None:
         """Switch to call waiting."""
-        await self._make_request("POST", ENDPOINT_ACTION_SWITCH_CALL_WAITING)
+        await self._make_action_request(ACTION_CALL_WAITING)
         await self.async_request_refresh()
+
+    async def refresh_data(self) -> None:
+        """Refresh device data."""
+        await self._make_action_request(ACTION_REFRESH)
+        await self.async_request_refresh()
+
+    async def _make_action_request(self, action: str, data: Dict[str, Any] = None) -> None:
+        """Make an action request to the unified action endpoint."""
+        payload = {"action": action}
+        if data:
+            payload.update(data)
+        await self._make_request("POST", ENDPOINT_ACTION, payload)
 
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None) -> None:
         """Make a request to the device."""
@@ -238,8 +282,29 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         # Load call log from storage
         await self._load_call_log()
         
+        # Configure HA server URL on device if available
+        if self.ha_server_url:
+            await self._send_ha_server_config()
+        
         # Start WebSocket connection
         await self._start_websocket()
+
+    async def _send_ha_server_config(self) -> None:
+        """Send HA server configuration to the device."""
+        try:
+            ha_server_url = self.ha_server_url
+            if not ha_server_url.startswith(('http://', 'https://')):
+                ha_server_url = f"http://{ha_server_url}"
+            
+            # Add port if not already included
+            if ':' not in ha_server_url.split('//')[-1]:
+                ha_server_url = f"{ha_server_url}:{self.ha_server_port}"
+            
+            data = {"server_url": ha_server_url}
+            await self._make_request("POST", ENDPOINT_WEBHOOKS, data)
+            _LOGGER.info("Successfully configured HA server URL on TsuryPhone device: %s", ha_server_url)
+        except Exception as err:
+            _LOGGER.warning("Failed to configure HA server URL on device: %s", err)
     
     async def async_shutdown(self) -> None:
         """Shutdown the coordinator."""

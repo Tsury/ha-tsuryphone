@@ -50,6 +50,24 @@ ring_device:
           step: 500
           unit_of_measurement: "ms"
 
+ring_device_with_pattern:
+  name: Ring Device with Pattern
+  description: Ring the TsuryPhone device with a specific ring pattern
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    pattern:
+      name: Ring Pattern
+      description: Ring pattern (e.g., "500,500,1000,500x2" means ring 500ms, pause 500ms, ring 1000ms, pause 500ms, repeat 2 times)
+      required: true
+      example: "500,500,1000,500x2"
+      selector:
+        text:
+
 reset_device:
   name: Reset Device
   description: Reset the TsuryPhone device (soft reset)
@@ -243,3 +261,46 @@ set_dnd_schedule_enabled:
       required: true
       selector:
         boolean:
+
+add_webhook_shortcut:
+  name: Add Webhook Shortcut
+  description: Add a new webhook shortcut that can be dialed like a phone number
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    name:
+      name: Shortcut Name
+      description: Short name for the webhook (e.g., "alarm", "lights")
+      required: true
+      example: "alarm"
+      selector:
+        text:
+    url:
+      name: Webhook URL
+      description: The webhook URL to call
+      required: true
+      example: "http://example.com/webhook"
+      selector:
+        text:
+
+remove_webhook_shortcut:
+  name: Remove Webhook Shortcut
+  description: Remove an existing webhook shortcut
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+    name:
+      name: Shortcut Name
+      description: Name of the webhook shortcut to remove
+      required: true
+      example: "alarm"
+      selector:
+        text:

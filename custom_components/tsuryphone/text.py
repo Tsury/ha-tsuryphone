@@ -27,6 +27,8 @@ async def async_setup_entry(
         TsuryPhoneCallNumberText(coordinator),
         TsuryPhoneAddPhonebookText(coordinator),
         TsuryPhoneAddBlockedText(coordinator),
+        TsuryPhoneRingPatternText(coordinator),
+        TsuryPhoneAddWebhookText(coordinator),
     ]
 
     async_add_entities(entities)
@@ -231,6 +233,67 @@ class TsuryPhoneRemoveBlockedText(TsuryPhoneBaseText):
                 await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to remove blocked number %s: %s", clean_number, err)
+                self._attr_native_value = value  # Keep the value if failed
+        else:
+            self._attr_native_value = ""
+
+
+class TsuryPhoneRingPatternText(TsuryPhoneBaseText):
+    """Text entity for setting ring pattern."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the text entity."""
+        super().__init__(coordinator, "ring_pattern")
+        self._attr_name = "TsuryPhone Ring Pattern"
+        self._attr_icon = "mdi:bell-ring-outline"
+        self._attr_mode = TextMode.TEXT
+        # Pattern for ring patterns: comma-separated numbers optionally followed by xN for repeats
+        self._attr_pattern = r"^$|^(\d+,)*\d+(x\d+)?$"
+        self._attr_native_value = "500,500,500,500x3"  # Default pattern
+        self._attr_native_max = 50
+        self._attr_extra_state_attributes = {
+            "description": "Ring pattern (e.g., '500,500,1000,500x2' means ring 500ms, pause 500ms, ring 1000ms, pause 500ms, repeat 2 times)"
+        }
+
+    async def async_set_value(self, value: str) -> None:
+        """Set the ring pattern."""
+        # Store the pattern - it will be used by the ring button
+        self._attr_native_value = value if value else "500,500,500,500x3"
+
+
+class TsuryPhoneAddWebhookText(TsuryPhoneBaseText):
+    """Text entity for adding webhook shortcuts."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the text entity."""
+        super().__init__(coordinator, "add_webhook")
+        self._attr_name = "TsuryPhone Add Webhook Shortcut"
+        self._attr_icon = "mdi:webhook"
+        self._attr_mode = TextMode.TEXT
+        self._attr_pattern = r"^$|^[a-zA-Z0-9]+:https?://.+$"
+        self._attr_native_value = ""
+        self._attr_native_max = 200
+        self._attr_extra_state_attributes = {
+            "description": "Add webhook shortcut as 'name:url' (e.g., 'alarm:http://example.com/webhook')"
+        }
+
+    async def async_set_value(self, value: str) -> None:
+        """Set the text value and add webhook shortcut."""
+        if value and ':' in value:
+            try:
+                name, url = value.split(':', 1)
+                name = name.strip()
+                url = url.strip()
+                
+                if name and url:
+                    await self.coordinator.add_webhook_shortcut(name, url)
+                    _LOGGER.info("Added webhook shortcut: %s -> %s", name, url)
+                    self._attr_native_value = ""  # Clear after adding
+                    await self.coordinator.async_request_refresh()
+                else:
+                    self._attr_native_value = value  # Keep if invalid format
+            except Exception as err:
+                _LOGGER.error("Failed to add webhook shortcut %s: %s", value, err)
                 self._attr_native_value = value  # Keep the value if failed
         else:
             self._attr_native_value = ""

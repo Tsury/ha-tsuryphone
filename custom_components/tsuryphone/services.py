@@ -12,6 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 SERVICE_CALL_NUMBER = "call_number"
 SERVICE_HANGUP = "hangup"
 SERVICE_RING_DEVICE = "ring_device"
+SERVICE_RING_DEVICE_WITH_PATTERN = "ring_device_with_pattern"
 SERVICE_RESET_DEVICE = "reset_device"
 SERVICE_SET_MAINTENANCE_MODE = "set_maintenance_mode"
 SERVICE_SWITCH_TO_CALL_WAITING = "switch_to_call_waiting"
@@ -19,6 +20,8 @@ SERVICE_ADD_PHONEBOOK_ENTRY = "add_phonebook_entry"
 SERVICE_REMOVE_PHONEBOOK_ENTRY = "remove_phonebook_entry"
 SERVICE_ADD_BLOCKED_NUMBER = "add_blocked_number"
 SERVICE_REMOVE_BLOCKED_NUMBER = "remove_blocked_number"
+SERVICE_ADD_WEBHOOK_SHORTCUT = "add_webhook_shortcut"
+SERVICE_REMOVE_WEBHOOK_SHORTCUT = "remove_webhook_shortcut"
 SERVICE_SET_DND_HOURS = "set_dnd_hours"
 SERVICE_SET_DND_FORCE_ENABLED = "set_dnd_force_enabled"
 SERVICE_SET_DND_SCHEDULE_ENABLED = "set_dnd_schedule_enabled"
@@ -36,6 +39,22 @@ HANGUP_SCHEMA = vol.Schema({
 RING_DEVICE_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
     vol.Optional("duration", default=5000): vol.All(vol.Coerce(int), vol.Range(min=500, max=30000)),
+})
+
+RING_DEVICE_WITH_PATTERN_SCHEMA = vol.Schema({
+    vol.Required("device_id"): cv.string,
+    vol.Required("pattern"): cv.string,
+})
+
+WEBHOOK_SHORTCUT_SCHEMA = vol.Schema({
+    vol.Required("device_id"): cv.string,
+    vol.Required("name"): cv.string,
+    vol.Required("url"): cv.string,
+})
+
+REMOVE_WEBHOOK_SHORTCUT_SCHEMA = vol.Schema({
+    vol.Required("device_id"): cv.string,
+    vol.Required("name"): cv.string,
 })
 
 RESET_DEVICE_SCHEMA = vol.Schema({
@@ -126,6 +145,25 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             _LOGGER.error("Device %s not found", device_id)
 
+    async def handle_ring_device_with_pattern(call: ServiceCall) -> None:
+        """Handle ring device with pattern service."""
+        device_id = call.data.get("device_id")
+        pattern = call.data.get("pattern")
+        
+        # Find coordinator for this device
+        coordinator = None
+        for entry_id, coord in hass.data[DOMAIN].items():
+            if hasattr(coord, "base_url") and device_id in coord.base_url:
+                coordinator = coord
+                break
+                
+        if coordinator:
+            await coordinator.ring_device_with_pattern(pattern)
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Rang device %s with pattern: %s", device_id, pattern)
+        else:
+            _LOGGER.error("Device %s not found", device_id)
+
     async def handle_add_phonebook_entry(call: ServiceCall) -> None:
         """Handle add phonebook entry service."""
         device_id = call.data.get("device_id")
@@ -200,6 +238,45 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             await coordinator.remove_blocked_number(number)
             await coordinator.async_request_refresh()
             _LOGGER.info("Removed blocked number %s on device %s", number, device_id)
+        else:
+            _LOGGER.error("Device %s not found", device_id)
+
+    async def handle_add_webhook_shortcut(call: ServiceCall) -> None:
+        """Handle add webhook shortcut service."""
+        device_id = call.data.get("device_id")
+        name = call.data.get("name")
+        url = call.data.get("url")
+        
+        # Find coordinator for this device
+        coordinator = None
+        for entry_id, coord in hass.data[DOMAIN].items():
+            if hasattr(coord, "base_url") and device_id in coord.base_url:
+                coordinator = coord
+                break
+                
+        if coordinator:
+            await coordinator.add_webhook_shortcut(name, url)
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Added webhook shortcut %s -> %s on device %s", name, url, device_id)
+        else:
+            _LOGGER.error("Device %s not found", device_id)
+
+    async def handle_remove_webhook_shortcut(call: ServiceCall) -> None:
+        """Handle remove webhook shortcut service."""
+        device_id = call.data.get("device_id")
+        name = call.data.get("name")
+        
+        # Find coordinator for this device
+        coordinator = None
+        for entry_id, coord in hass.data[DOMAIN].items():
+            if hasattr(coord, "base_url") and device_id in coord.base_url:
+                coordinator = coord
+                break
+                
+        if coordinator:
+            await coordinator.remove_webhook_shortcut(name)
+            await coordinator.async_request_refresh()
+            _LOGGER.info("Removed webhook shortcut %s on device %s", name, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
@@ -363,6 +440,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     
     hass.services.async_register(
+        DOMAIN, SERVICE_RING_DEVICE_WITH_PATTERN, handle_ring_device_with_pattern, schema=RING_DEVICE_WITH_PATTERN_SCHEMA
+    )
+    
+    hass.services.async_register(
         DOMAIN, SERVICE_RESET_DEVICE, handle_reset_device, schema=RESET_DEVICE_SCHEMA
     )
     
@@ -388,6 +469,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     
     hass.services.async_register(
         DOMAIN, SERVICE_REMOVE_BLOCKED_NUMBER, handle_remove_blocked_number, schema=BLOCKED_NUMBER_SCHEMA
+    )
+    
+    hass.services.async_register(
+        DOMAIN, SERVICE_ADD_WEBHOOK_SHORTCUT, handle_add_webhook_shortcut, schema=WEBHOOK_SHORTCUT_SCHEMA
+    )
+    
+    hass.services.async_register(
+        DOMAIN, SERVICE_REMOVE_WEBHOOK_SHORTCUT, handle_remove_webhook_shortcut, schema=REMOVE_WEBHOOK_SHORTCUT_SCHEMA
     )
     
     hass.services.async_register(

@@ -26,6 +26,11 @@ TsuryPhone is a vintage rotary phone converted to work with modern cellular netw
 - **Phonebook Management**: Add/remove contacts via services
 - **Call Screening**: Block unwanted numbers
 
+### 🔗 Webhook Integration
+- **Automatic Configuration**: The integration automatically configures your TsuryPhone device with your Home Assistant server details
+- **Real-time Updates**: Receive instant notifications via webhooks for phone events
+- **Bidirectional Communication**: Full two-way integration between Home Assistant and your TsuryPhone device
+
 ### 🏠 Home Assistant Entities
 
 #### Sensors (13)
@@ -84,14 +89,18 @@ pio run -e releaseHA -t upload
 1. Go to **Settings** → **Devices & Services**
 2. Click **Add Integration**
 3. Search for **"TsuryPhone"**
-4. Enter your device's **IP address**
-5. Click **Submit**
+4. Enter your device's **IP address** and **port**
+5. Configure **Home Assistant server URL** (auto-detected, can be modified)
+6. Click **Submit**
+
+> **Note**: The integration will automatically configure your TsuryPhone device with your Home Assistant server details for webhook functionality.
 
 ### Step 4: Verify Installation
 ✅ Check that you see:
 - TsuryPhone device in your devices list
 - 13 sensors, 4 binary sensors, and various controls
 - Real-time phone state updates
+- Webhook configuration applied to your device
 
 ## 📖 Quick Start Examples
 

@@ -26,6 +26,8 @@ async def async_setup_entry(
         TsuryPhonePhonebookSelect(coordinator),
         TsuryPhoneBlockedNumbersSelect(coordinator),
         TsuryPhoneRemovePhonebookSelect(coordinator),
+        TsuryPhoneWebhookShortcutsSelect(coordinator),
+        TsuryPhoneRemoveWebhookSelect(coordinator),
     ]
 
     async_add_entities(entities)
@@ -191,6 +193,126 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
                 entry_number = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_phonebook_entry(entry_number)
                 _LOGGER.info("Removed quick dial entry %s from phonebook", entry_number)
+                await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        # Always available
+        return True
+
+
+class TsuryPhoneWebhookShortcutsSelect(TsuryPhoneBaseSelect):
+    """Select entity for webhook shortcuts - allows calling webhooks."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the select."""
+        super().__init__(coordinator, "webhook_shortcuts")
+        self._attr_name = "TsuryPhone Webhook Shortcuts"
+        self._attr_icon = "mdi:webhook"
+
+    @property
+    def options(self) -> List[str]:
+        """Return the list of available options."""
+        base_options = ["Select webhook to execute..."]
+        
+        if "webhooks" in self.coordinator.data:
+            webhook_data = self.coordinator.data["webhooks"]
+            if isinstance(webhook_data, dict) and "entries" in webhook_data:
+                webhook_entries = webhook_data["entries"]
+                if webhook_entries:
+                    for name, url in webhook_entries.items():
+                        # Truncate long URLs for display
+                        display_url = url[:40] + "..." if len(url) > 40 else url
+                        base_options.append(f"🔗 {name}: {display_url}")
+                else:
+                    base_options.append("No webhook shortcuts")
+            else:
+                base_options.append("No webhook shortcuts")
+        else:
+            base_options.append("No webhook shortcuts")
+            
+        return base_options
+
+    @property
+    def current_option(self) -> Optional[str]:
+        """Return the current option."""
+        return "Select webhook to execute..."
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option and execute webhook."""
+        if option in ["Select webhook to execute...", "No webhook shortcuts"]:
+            return
+            
+        if option.startswith("🔗 "):
+            # Extract webhook name and execute it by "dialing" it
+            # Format: "🔗 alarm: http://example.com/webhook..."
+            if ": " in option:
+                webhook_name = option.split(": ")[0].replace("🔗 ", "")
+                # Call the webhook by using the call function with the webhook name
+                await self.coordinator.call_number(webhook_name)
+                _LOGGER.info("Executed webhook shortcut: %s", webhook_name)
+                await self.coordinator.async_request_refresh()
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        # Only available when not in a call
+        if "status" in self.coordinator.data:
+            call = self.coordinator.data["status"].get("call", {})
+            return not call.get("active", False)
+        return True
+
+
+class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
+    """Select entity for removing webhook shortcuts."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the select."""
+        super().__init__(coordinator, "remove_webhook")
+        self._attr_name = "TsuryPhone Remove Webhook Shortcut"
+        self._attr_icon = "mdi:webhook-off"
+
+    @property
+    def options(self) -> List[str]:
+        """Return the list of available options."""
+        base_options = ["Select webhook to remove..."]
+        
+        if "webhooks" in self.coordinator.data:
+            webhook_data = self.coordinator.data["webhooks"]
+            if isinstance(webhook_data, dict) and "entries" in webhook_data:
+                webhook_entries = webhook_data["entries"]
+                if webhook_entries:
+                    for name, url in webhook_entries.items():
+                        # Truncate long URLs for display
+                        display_url = url[:40] + "..." if len(url) > 40 else url
+                        base_options.append(f"🗑️ {name}: {display_url}")
+                else:
+                    base_options.append("No webhook shortcuts")
+            else:
+                base_options.append("No webhook shortcuts")
+        else:
+            base_options.append("No webhook shortcuts")
+            
+        return base_options
+
+    @property
+    def current_option(self) -> Optional[str]:
+        """Return the current option."""
+        return "Select webhook to remove..."
+
+    async def async_select_option(self, option: str) -> None:
+        """Change the selected option and remove webhook."""
+        if option in ["Select webhook to remove...", "No webhook shortcuts"]:
+            return
+            
+        if option.startswith("🗑️ "):
+            # Extract webhook name and remove it
+            # Format: "🗑️ alarm: http://example.com/webhook..."
+            if ": " in option:
+                webhook_name = option.split(": ")[0].replace("🗑️ ", "")
+                await self.coordinator.remove_webhook_shortcut(webhook_name)
+                _LOGGER.info("Removed webhook shortcut: %s", webhook_name)
                 await self.coordinator.async_request_refresh()
 
     @property

@@ -45,6 +45,7 @@ async def async_setup_entry(
         TsuryPhoneSketchSizeSensor(coordinator),
         TsuryPhoneLastCallSensor(coordinator),
         TsuryPhoneTotalTalkTimeSensor(coordinator),
+        TsuryPhoneWebhookCountSensor(coordinator),
     ]
 
     async_add_entities(entities)
@@ -480,3 +481,35 @@ class TsuryPhoneTotalTalkTimeSensor(TsuryPhoneBaseSensor):
                 "outgoing_talk_time_formatted": f"{outgoing_duration // 3600:02d}:{(outgoing_duration % 3600) // 60:02d}:{outgoing_duration % 60:02d}",
             }
         return {}
+
+
+class TsuryPhoneWebhookCountSensor(TsuryPhoneBaseSensor):
+    """Sensor for webhook shortcuts count."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "webhook_count")
+        self._attr_name = "TsuryPhone Webhook Shortcuts Count"
+        self._attr_icon = "mdi:webhook"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the webhook shortcuts count."""
+        if "webhooks" in self.coordinator.data:
+            webhook_data = self.coordinator.data["webhooks"]
+            if isinstance(webhook_data, dict) and "entries" in webhook_data:
+                return len(webhook_data["entries"])
+        return 0
+
+    @property
+    def extra_state_attributes(self) -> Dict[str, Any]:
+        """Return webhook shortcuts details."""
+        if "webhooks" in self.coordinator.data:
+            webhook_data = self.coordinator.data["webhooks"]
+            if isinstance(webhook_data, dict) and "entries" in webhook_data:
+                return {
+                    "webhook_shortcuts": webhook_data["entries"],
+                    "total_webhooks": len(webhook_data["entries"])
+                }
+        return {"webhook_shortcuts": {}, "total_webhooks": 0}

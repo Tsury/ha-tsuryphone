@@ -8,6 +8,14 @@
           "host": "Host",
           "port": "Port"
         }
+      },
+      "ha_server": {
+        "title": "Configure Home Assistant Server",
+        "description": "Configure the Home Assistant server details so {device_name} can send webhooks back to Home Assistant",
+        "data": {
+          "ha_server_url": "Home Assistant Server URL",
+          "ha_server_port": "Home Assistant Server Port"
+        }
       }
     },
     "error": {
