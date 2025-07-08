@@ -42,7 +42,6 @@ from .const import (
     CONF_HOST,
     CONF_PORT,
     CONF_HA_SERVER_URL,
-    CONF_HA_SERVER_PORT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,7 +73,6 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         
         # HA server configuration (for webhooks)
         self.ha_server_url = entry.data.get(CONF_HA_SERVER_URL, "")
-        self.ha_server_port = entry.data.get(CONF_HA_SERVER_PORT, 8123)
         
         # Call log storage
         self._call_log_store = Store(hass, 1, f"{DOMAIN}_call_log_{entry.entry_id}")
@@ -295,10 +293,6 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             ha_server_url = self.ha_server_url
             if not ha_server_url.startswith(('http://', 'https://')):
                 ha_server_url = f"http://{ha_server_url}"
-            
-            # Add port if not already included
-            if ':' not in ha_server_url.split('//')[-1]:
-                ha_server_url = f"{ha_server_url}:{self.ha_server_port}"
             
             data = {"server_url": ha_server_url}
             await self._make_request("POST", ENDPOINT_WEBHOOKS, data)

@@ -5,16 +5,15 @@
         "title": "Add TsuryPhone",
         "description": "Enter the connection details for your TsuryPhone device",
         "data": {
-          "host": "Host",
-          "port": "Port"
+          "host": "Device IP Address or Hostname",
+          "port": "Device Port"
         }
       },
       "ha_server": {
         "title": "Configure Home Assistant Server",
-        "description": "Configure the Home Assistant server details so {device_name} can send webhooks back to Home Assistant",
+        "description": "Configure the Home Assistant server URL so {device_name} can send webhooks back to Home Assistant. Include the port in the URL (e.g., http://homeassistant.local:8123)",
         "data": {
-          "ha_server_url": "Home Assistant Server URL",
-          "ha_server_port": "Home Assistant Server Port"
+          "ha_server_url": "Home Assistant Server URL"
         }
       }
     },

@@ -16,7 +16,6 @@ from .const import (
     CONF_HOST, 
     CONF_PORT, 
     CONF_HA_SERVER_URL, 
-    CONF_HA_SERVER_PORT,
     DEFAULT_PORT,
     DEFAULT_HA_SERVER_PORT
 )
@@ -24,11 +23,8 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_ha_server_url(hass: HomeAssistant, port: int = None) -> str:
-    """Get the Home Assistant server URL."""
-    if port is None:
-        port = DEFAULT_HA_SERVER_PORT
-    
+def get_ha_server_url(hass: HomeAssistant) -> str:
+    """Get the Home Assistant server URL with port included."""
     # Try to get the external URL first
     if hass.config.external_url:
         return hass.config.external_url
@@ -37,8 +33,8 @@ def get_ha_server_url(hass: HomeAssistant, port: int = None) -> str:
     if hass.config.internal_url:
         return hass.config.internal_url
     
-    # Last resort - construct from local IP
-    return f"http://homeassistant.local:{port}"
+    # Last resort - construct from local IP with default port
+    return f"http://homeassistant.local:{DEFAULT_HA_SERVER_PORT}"
 
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
@@ -55,7 +51,6 @@ def get_ha_server_step_schema(hass: HomeAssistant) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_HA_SERVER_URL, default=default_url): cv.string,
-            vol.Required(CONF_HA_SERVER_PORT, default=DEFAULT_HA_SERVER_PORT): cv.port,
         }
     )
 
@@ -181,15 +176,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         host = config[CONF_HOST]
         port = config[CONF_PORT]
         ha_server_url = config[CONF_HA_SERVER_URL]
-        ha_server_port = config[CONF_HA_SERVER_PORT]
         
-        # Construct the full HA server URL
+        # Ensure the URL has a protocol
         if not ha_server_url.startswith(('http://', 'https://')):
             ha_server_url = f"http://{ha_server_url}"
-        
-        # Add port if not already included
-        if ':' not in ha_server_url.split('//')[-1]:
-            ha_server_url = f"{ha_server_url}:{ha_server_port}"
         
         # Send configuration to device
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
