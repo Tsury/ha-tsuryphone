@@ -108,7 +108,7 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
                 device_info = await response.json()
                 
                 # Validate this is actually a TsuryPhone device
-                if "device" not in device_info or device_info.get("device") != "TsuryPhone":
+                if "device" not in device_info or device_info.get("device") != "tsuryphone":
                     raise InvalidDevice
                 
                 return {
