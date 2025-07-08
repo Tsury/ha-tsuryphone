@@ -72,12 +72,15 @@ class TsuryPhoneCallNumberText(TsuryPhoneBaseText):
                 await self.coordinator.call_number(clean_number)
                 _LOGGER.info("Called number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after calling
+                self.async_write_ha_state()  # Force state update
                 await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to call number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
+                self.async_write_ha_state()
         else:
             self._attr_native_value = ""
+            self.async_write_ha_state()
 
     @property
     def available(self) -> bool:
@@ -120,16 +123,21 @@ class TsuryPhoneAddPhonebookText(TsuryPhoneBaseText):
                         await self.coordinator.add_phonebook_entry(entry_number, phone_number)
                         _LOGGER.info("Added quick dial entry: %s -> %s", entry_number, phone_number)
                         self._attr_native_value = ""  # Clear after adding
+                        self.async_write_ha_state()  # Force state update
                         await self.coordinator.async_request_refresh()
                     except Exception as err:
                         _LOGGER.error("Failed to add quick dial entry %s: %s", entry_number, err)
                         self._attr_native_value = value  # Keep the value if failed
+                        self.async_write_ha_state()
                 else:
                     self._attr_native_value = value
+                    self.async_write_ha_state()
             else:
                 self._attr_native_value = value
+                self.async_write_ha_state()
         else:
             self._attr_native_value = value
+            self.async_write_ha_state()
 
 
 class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
@@ -156,12 +164,15 @@ class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
                 await self.coordinator.remove_phonebook_entry(name)
                 _LOGGER.info("Removed phonebook entry: %s", name)
                 self._attr_native_value = ""  # Clear after removing
+                self.async_write_ha_state()  # Force state update
                 await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to remove phonebook entry %s: %s", name, err)
                 self._attr_native_value = value  # Keep the value if failed
+                self.async_write_ha_state()
         else:
             self._attr_native_value = ""
+            self.async_write_ha_state()
 
 
 class TsuryPhoneAddBlockedText(TsuryPhoneBaseText):
@@ -190,12 +201,15 @@ class TsuryPhoneAddBlockedText(TsuryPhoneBaseText):
                 await self.coordinator.add_blocked_number(clean_number)
                 _LOGGER.info("Added blocked number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after adding
+                self.async_write_ha_state()  # Force state update
                 await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to add blocked number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
+                self.async_write_ha_state()
         else:
             self._attr_native_value = ""
+            self.async_write_ha_state()
 
 
 class TsuryPhoneRemoveBlockedText(TsuryPhoneBaseText):
@@ -224,12 +238,15 @@ class TsuryPhoneRemoveBlockedText(TsuryPhoneBaseText):
                 await self.coordinator.remove_blocked_number(clean_number)
                 _LOGGER.info("Removed blocked number: %s", clean_number)
                 self._attr_native_value = ""  # Clear after removing
+                self.async_write_ha_state()  # Force state update
                 await self.coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.error("Failed to remove blocked number %s: %s", clean_number, err)
                 self._attr_native_value = value  # Keep the value if failed
+                self.async_write_ha_state()
         else:
             self._attr_native_value = ""
+            self.async_write_ha_state()
 
 
 class TsuryPhoneRingPatternText(TsuryPhoneBaseText):
@@ -253,6 +270,7 @@ class TsuryPhoneRingPatternText(TsuryPhoneBaseText):
         """Set the ring pattern."""
         # Store the pattern - it will be used by the ring button
         self._attr_native_value = value if value else "500,500,500,500x3"
+        self.async_write_ha_state()  # Force state update
 
 
 class TsuryPhoneAddWebhookText(TsuryPhoneBaseText):
@@ -283,11 +301,15 @@ class TsuryPhoneAddWebhookText(TsuryPhoneBaseText):
                     await self.coordinator.add_webhook_shortcut(name, url)
                     _LOGGER.info("Added webhook shortcut: %s -> %s", name, url)
                     self._attr_native_value = ""  # Clear after adding
+                    self.async_write_ha_state()  # Force state update
                     await self.coordinator.async_request_refresh()
                 else:
                     self._attr_native_value = value  # Keep if invalid format
+                    self.async_write_ha_state()
             except Exception as err:
                 _LOGGER.error("Failed to add webhook shortcut %s: %s", value, err)
                 self._attr_native_value = value  # Keep the value if failed
+                self.async_write_ha_state()
         else:
             self._attr_native_value = ""
+            self.async_write_ha_state()

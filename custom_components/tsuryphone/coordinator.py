@@ -269,25 +269,33 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         payload = {"action": action}
         if data:
             payload.update(data)
+        _LOGGER.debug("Making action request: %s with payload: %s", action, payload)
         await self._make_request("POST", ENDPOINT_ACTION, payload)
 
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None) -> None:
         """Make a request to the device."""
         url = f"{self.base_url}{endpoint}"
+        _LOGGER.debug("Making %s request to %s with data: %s", method, url, data)
         
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
                 if method == "POST" and data:
                     headers = {"Content-Type": "application/json"}
                     async with session.post(url, json=data, headers=headers) as response:
+                        _LOGGER.debug("Response status: %s", response.status)
                         response.raise_for_status()
+                        _LOGGER.debug("Request successful")
                 else:
                     async with session.request(method, url) as response:
+                        _LOGGER.debug("Response status: %s", response.status)
                         response.raise_for_status()
+                        _LOGGER.debug("Request successful")
                         
         except asyncio.TimeoutError as err:
+            _LOGGER.error("Timeout during %s request to %s", method, url)
             raise UpdateFailed(f"Timeout during {method} request to {url}") from err
         except aiohttp.ClientError as err:
+            _LOGGER.error("Error during %s request to %s: %s", method, url, err)
             raise UpdateFailed(f"Error during {method} request to {url}: {err}") from err
 
     async def async_setup(self) -> None:
