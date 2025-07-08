@@ -212,13 +212,17 @@ class TsuryPhoneWebhookShortcutsSelect(TsuryPhoneBaseSelect):
         
         if "webhooks" in self.coordinator.data:
             webhook_data = self.coordinator.data["webhooks"]
-            if isinstance(webhook_data, dict) and "entries" in webhook_data:
-                webhook_entries = webhook_data["entries"]
-                if webhook_entries:
-                    for name, url in webhook_entries.items():
-                        # Truncate long URLs for display
-                        display_url = url[:40] + "..." if len(url) > 40 else url
-                        base_options.append(f"🔗 {name}: {display_url}")
+            # Handle the actual firmware format: {"webhooks": [{"number": "...", "webhook_id": "..."}]}
+            if isinstance(webhook_data, dict) and "webhooks" in webhook_data:
+                webhook_entries = webhook_data["webhooks"]
+                if webhook_entries and isinstance(webhook_entries, list):
+                    for entry in webhook_entries:
+                        if isinstance(entry, dict) and "number" in entry and "webhook_id" in entry:
+                            name = entry["number"]
+                            webhook_id = entry["webhook_id"]
+                            # Truncate long webhook IDs for display
+                            display_id = webhook_id[:20] + "..." if len(webhook_id) > 20 else webhook_id
+                            base_options.append(f"🔗 {name}: {display_id}")
                 else:
                     base_options.append("No webhook shortcuts")
             else:
@@ -274,13 +278,17 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
         
         if "webhooks" in self.coordinator.data:
             webhook_data = self.coordinator.data["webhooks"]
-            if isinstance(webhook_data, dict) and "entries" in webhook_data:
-                webhook_entries = webhook_data["entries"]
-                if webhook_entries:
-                    for name, url in webhook_entries.items():
-                        # Truncate long URLs for display
-                        display_url = url[:40] + "..." if len(url) > 40 else url
-                        base_options.append(f"🗑️ {name}: {display_url}")
+            # Handle the actual firmware format: {"webhooks": [{"number": "...", "webhook_id": "..."}]}
+            if isinstance(webhook_data, dict) and "webhooks" in webhook_data:
+                webhook_entries = webhook_data["webhooks"]
+                if webhook_entries and isinstance(webhook_entries, list):
+                    for entry in webhook_entries:
+                        if isinstance(entry, dict) and "number" in entry and "webhook_id" in entry:
+                            name = entry["number"]
+                            webhook_id = entry["webhook_id"]
+                            # Truncate long webhook IDs for display
+                            display_id = webhook_id[:20] + "..." if len(webhook_id) > 20 else webhook_id
+                            base_options.append(f"🗑️ {name}: {display_id}")
                 else:
                     base_options.append("No webhook shortcuts")
             else:
