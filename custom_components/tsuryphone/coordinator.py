@@ -229,14 +229,14 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         await self._make_action_request(ACTION_BLOCKED_REMOVE, {"number": number})
         await self.async_request_refresh()
 
-    async def add_webhook_shortcut(self, name: str, url: str) -> None:
-        """Add a webhook shortcut."""
-        await self._make_action_request(ACTION_WEBHOOK_ADD, {"name": name, "url": url})
+    async def add_webhook_shortcut(self, name: str, webhook_id: str) -> None:
+        """Add a webhook shortcut with name and webhook ID."""
+        await self._make_action_request(ACTION_WEBHOOK_ADD, {"number": name, "webhook_id": webhook_id})
         await self.async_request_refresh()
 
     async def remove_webhook_shortcut(self, name: str) -> None:
         """Remove a webhook shortcut."""
-        await self._make_action_request(ACTION_WEBHOOK_REMOVE, {"name": name})
+        await self._make_action_request(ACTION_WEBHOOK_REMOVE, {"number": name})
         await self.async_request_refresh()
 
     async def set_dnd_force_enabled(self, enabled: bool) -> None:

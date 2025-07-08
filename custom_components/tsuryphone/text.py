@@ -282,24 +282,24 @@ class TsuryPhoneAddWebhookText(TsuryPhoneBaseText):
         self._attr_name = "TsuryPhone Add Webhook Shortcut"
         self._attr_icon = "mdi:webhook"
         self._attr_mode = TextMode.TEXT
-        self._attr_pattern = r"^$|^[a-zA-Z0-9]+:https?://.+$"
+        self._attr_pattern = r"^$|^[a-zA-Z0-9_-]+:[a-zA-Z0-9_.-]+$"
         self._attr_native_value = ""
-        self._attr_native_max = 200
+        self._attr_native_max = 100
         self._attr_extra_state_attributes = {
-            "description": "Add webhook shortcut as 'name:url' (e.g., 'alarm:http://example.com/webhook')"
+            "description": "Add webhook shortcut as 'name:webhook_id' (e.g., 'alarm:-hNjfoRpjxzeJUNaO7YG6qG0F')"
         }
 
     async def async_set_value(self, value: str) -> None:
         """Set the text value and add webhook shortcut."""
         if value and ':' in value:
             try:
-                name, url = value.split(':', 1)
+                name, webhook_id = value.split(':', 1)
                 name = name.strip()
-                url = url.strip()
+                webhook_id = webhook_id.strip()
                 
-                if name and url:
-                    await self.coordinator.add_webhook_shortcut(name, url)
-                    _LOGGER.info("Added webhook shortcut: %s -> %s", name, url)
+                if name and webhook_id:
+                    await self.coordinator.add_webhook_shortcut(name, webhook_id)
+                    _LOGGER.info("Added webhook shortcut: %s -> %s", name, webhook_id)
                     self._attr_native_value = ""  # Clear after adding
                     self.async_write_ha_state()  # Force state update
                     await self.coordinator.async_request_refresh()

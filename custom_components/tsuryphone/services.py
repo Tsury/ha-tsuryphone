@@ -245,7 +245,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         """Handle add webhook shortcut service."""
         device_id = call.data.get("device_id")
         name = call.data.get("name")
-        url = call.data.get("url")
+        webhook_id = call.data.get("url")  # Keep "url" for backward compatibility but treat as webhook_id
         
         # Find coordinator for this device
         coordinator = None
@@ -255,9 +255,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            await coordinator.add_webhook_shortcut(name, url)
+            await coordinator.add_webhook_shortcut(name, webhook_id)
             await coordinator.async_request_refresh()
-            _LOGGER.info("Added webhook shortcut %s -> %s on device %s", name, url, device_id)
+            _LOGGER.info("Added webhook shortcut %s -> %s on device %s", name, webhook_id, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
 
