@@ -30,9 +30,28 @@ _LOGGER = logging.getLogger(__name__)
 def validate_device_name(device_name: str) -> bool:
     """Validate device name format."""
     # Must start with a letter, only lowercase letters, numbers, and dashes
-    # Cannot have two sequential dashes
-    pattern = r'^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
-    return bool(re.match(pattern, device_name)) and '--' not in device_name
+    # Cannot have two sequential dashes or end with dash
+    if not device_name:
+        return False
+    
+    # Check basic format: starts with letter, contains only valid chars
+    pattern = r'^[a-z][a-z0-9-]*$'
+    if not re.match(pattern, device_name):
+        _LOGGER.debug("Device name '%s' failed basic pattern check", device_name)
+        return False
+    
+    # Cannot have consecutive dashes
+    if '--' in device_name:
+        _LOGGER.debug("Device name '%s' contains consecutive dashes", device_name)
+        return False
+    
+    # Cannot end with dash
+    if device_name.endswith('-'):
+        _LOGGER.debug("Device name '%s' ends with dash", device_name)
+        return False
+    
+    _LOGGER.debug("Device name '%s' is valid", device_name)
+    return True
 
 
 def get_ha_server_url(hass: HomeAssistant) -> str:
@@ -74,8 +93,11 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
     port = data[CONF_PORT]
     device_name = data[CONF_DEVICE_NAME]
     
+    _LOGGER.debug("Validating input: host=%s, port=%s, device_name=%s", host, port, device_name)
+    
     # Validate device name format
     if not validate_device_name(device_name):
+        _LOGGER.warning("Device name validation failed for: %s", device_name)
         raise InvalidDeviceName
     
     try:
@@ -128,7 +150,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except InvalidDevice:
             errors["base"] = "invalid_device"
         except InvalidDeviceName:
-            errors["base"] = "invalid_device_name"
+            errors[CONF_DEVICE_NAME] = "invalid_device_name"
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
@@ -141,7 +163,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_ha_server()
 
         return self.async_show_form(
-            step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
+            step_id="user", 
+            data_schema=vol.Schema({
+                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): cv.string,
+                vol.Required(CONF_PORT, default=user_input.get(CONF_PORT, DEFAULT_PORT)): cv.port,
+                vol.Required(CONF_DEVICE_NAME, default=user_input.get(CONF_DEVICE_NAME, DEFAULT_DEVICE_NAME)): cv.string,
+            }), 
+            errors=errors
         )
 
     async def async_step_ha_server(

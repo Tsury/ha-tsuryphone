@@ -7,7 +7,7 @@
         "data": {
           "host": "Device IP Address or Hostname",
           "port": "Device Port",
-          "device_name": "Device Name (lowercase letters, numbers, and dashes only, must start with a letter, cannot have two sequential dashes)"
+          "device_name": "Device Name (lowercase letters, numbers, and dashes only, must start with a letter, cannot have consecutive dashes or end with dash)"
         }
       },
       "ha_server": {
@@ -21,7 +21,7 @@
     "error": {
       "cannot_connect": "Failed to connect",
       "invalid_device": "Not a valid TsuryPhone device",
-      "invalid_device_name": "Invalid device name format. Must start with a letter, only lowercase letters, numbers, and dashes allowed, and cannot have two sequential dashes.",
+      "invalid_device_name": "Invalid device name format. Must start with a letter, contain only lowercase letters, numbers, and dashes, cannot have consecutive dashes or end with a dash.",
       "unknown": "Unexpected error"
     },
     "abort": {
