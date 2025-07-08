@@ -15,11 +15,11 @@ PLATFORMS = [
 ]
 
 # Configuration
-CONF_HOST = "host"
-CONF_PORT = "port"
-CONF_HA_SERVER_URL = "ha_server_url"
-CONF_HA_SERVER_PORT = "ha_server_port"
-CONF_DEVICE_NAME = "device_name"
+CONF_HOST = "Host"
+CONF_PORT = "Port"
+CONF_HA_SERVER_URL = "Home Assistant Server URL"
+CONF_HA_SERVER_PORT = "Home Assistant Server Port"
+CONF_DEVICE_NAME = "Device Name"
 
 # Default values
 DEFAULT_PORT = 80
