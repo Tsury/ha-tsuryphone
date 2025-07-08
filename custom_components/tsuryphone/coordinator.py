@@ -2,9 +2,10 @@
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 import async_timeout
@@ -46,6 +47,77 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def parse_ring_pattern(pattern: str) -> Optional[Dict[str, Any]]:
+    """Parse a ring pattern string into structured data.
+    
+    Examples:
+        "2500,500,500,500x3" -> {"durations": [2500, 500, 500, 500], "repeats": 3}
+        "1000,200,1000" -> {"durations": [1000, 200, 1000], "repeats": 1}
+        "500/5" -> {"durations": [500], "repeats": 5}
+    """
+    if not pattern or not isinstance(pattern, str):
+        return None
+    
+    pattern = pattern.strip()
+    if not pattern:
+        return None
+    
+    try:
+        # Check for repeat syntax: pattern x number or pattern/number
+        repeats = 1
+        main_pattern = pattern
+        
+        # Handle "x3" syntax
+        if 'x' in pattern:
+            parts = pattern.rsplit('x', 1)
+            if len(parts) == 2:
+                main_pattern = parts[0]
+                repeats = int(parts[1])
+        # Handle "/3" syntax  
+        elif '/' in pattern:
+            parts = pattern.rsplit('/', 1)
+            if len(parts) == 2:
+                main_pattern = parts[0]
+                repeats = int(parts[1])
+        
+        if repeats <= 0 or repeats > 100:  # Reasonable limits
+            _LOGGER.error("Invalid repeat count in pattern: %s", pattern)
+            return None
+        
+        # Parse comma-separated durations
+        duration_parts = main_pattern.split(',')
+        durations = []
+        
+        for duration_str in duration_parts:
+            duration_str = duration_str.strip()
+            if not duration_str:
+                continue
+            duration = int(duration_str)
+            if duration <= 0 or duration > 30000:  # Max 30 seconds per duration
+                _LOGGER.error("Invalid duration in pattern: %s", duration_str)
+                return None
+            durations.append(duration)
+        
+        if not durations:
+            _LOGGER.error("No valid durations found in pattern: %s", pattern)
+            return None
+        
+        # Validate pattern logic
+        if repeats > 1 and len(durations) % 2 != 0:
+            _LOGGER.error("Pattern with repeats must have even number of durations (alternating ring/pause): %s", pattern)
+            return None
+        
+        return {
+            "durations": durations,
+            "repeats": repeats
+        }
+        
+    except (ValueError, IndexError) as e:
+        _LOGGER.error("Failed to parse ring pattern '%s': %s", pattern, e)
+        return None
+
 
 # Call log entry structure
 class CallLogEntry:
@@ -195,7 +267,17 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def ring_device_with_pattern(self, pattern: str) -> None:
         """Ring the device with a specific pattern."""
-        await self._make_action_request(ACTION_RING_PATTERN, {"pattern": pattern})
+        # Parse the pattern string into structured data
+        parsed_pattern = parse_ring_pattern(pattern)
+        if parsed_pattern is None:
+            _LOGGER.error("Invalid ring pattern: %s", pattern)
+            raise ValueError(f"Invalid ring pattern: {pattern}")
+        
+        # Send the parsed pattern data instead of raw string
+        await self._make_action_request(ACTION_RING_PATTERN, {
+            "durations": parsed_pattern["durations"],
+            "repeats": parsed_pattern["repeats"]
+        })
         await self.async_request_refresh()
 
     async def set_dnd_hours(self, start_hour: int, start_minute: int, end_hour: int, end_minute: int) -> None:
