@@ -42,6 +42,7 @@ from .const import (
     CONF_HOST,
     CONF_PORT,
     CONF_HA_SERVER_URL,
+    CONF_DEVICE_NAME,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +75,9 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         # HA server configuration (for webhooks)
         self.ha_server_url = entry.data.get(CONF_HA_SERVER_URL, "")
         
+        # Device configuration
+        self.device_name = entry.data.get(CONF_DEVICE_NAME, "tsuryphone")
+        
         # Call log storage
         self._call_log_store = Store(hass, 1, f"{DOMAIN}_call_log_{entry.entry_id}")
         self._call_log: List[CallLogEntry] = []
@@ -94,6 +98,17 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             name=DOMAIN,
             update_interval=timedelta(seconds=DEFAULT_SCAN_INTERVAL),
         )
+
+    @property
+    def device_info(self) -> Dict[str, Any]:
+        """Return device info for this coordinator."""
+        return {
+            "identifiers": {(DOMAIN, self.base_url)},
+            "name": f"TsuryPhone ({self.device_name})",
+            "manufacturer": "TsuryPhone Project",
+            "model": "TsuryPhone",
+            "configuration_url": self.base_url,
+        }
 
     async def _async_update_data(self) -> Dict[str, Any]:
         """Fetch data from API endpoint."""

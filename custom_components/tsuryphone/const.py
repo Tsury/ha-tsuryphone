@@ -19,10 +19,12 @@ CONF_HOST = "host"
 CONF_PORT = "port"
 CONF_HA_SERVER_URL = "ha_server_url"
 CONF_HA_SERVER_PORT = "ha_server_port"
+CONF_DEVICE_NAME = "device_name"
 
 # Default values
 DEFAULT_PORT = 80
 DEFAULT_HA_SERVER_PORT = 8123
+DEFAULT_DEVICE_NAME = "tsuryphone"
 DEFAULT_SCAN_INTERVAL = 30  # Normal polling interval
 FAST_REFRESH_INTERVAL = 1    # Fast refresh interval after actions
 
@@ -64,6 +66,7 @@ ACTION_CALL_WAITING = "switch_call_waiting"
 ACTION_REFRESH = "refresh_data"
 ACTION_MAINTENANCE = "maintenance_mode"
 ACTION_RESET = "reset"
+ACTION_SET_DEVICE_NAME = "set_device_name"
 
 # Phone states
 PHONE_STATES = [

@@ -39,13 +39,7 @@ class TsuryPhoneBaseTime(CoordinatorEntity, TimeEntity):
         super().__init__(coordinator)
         self._time_type = time_type
         self._attr_unique_id = f"{coordinator.base_url}_{time_type}"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.base_url)},
-            "name": "TsuryPhone",
-            "manufacturer": MANUFACTURER,
-            "model": MODEL,
-            "configuration_url": coordinator.base_url,
-        }
+        self._attr_device_info = coordinator.device_info
 
 
 class TsuryPhoneDndStartTime(TsuryPhoneBaseTime):

@@ -42,13 +42,7 @@ class TsuryPhoneBaseText(CoordinatorEntity, TextEntity):
         super().__init__(coordinator)
         self._text_type = text_type
         self._attr_unique_id = f"{coordinator.base_url}_{text_type}"
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.base_url)},
-            "name": "TsuryPhone",
-            "manufacturer": MANUFACTURER,
-            "model": MODEL,
-            "configuration_url": coordinator.base_url,
-        }
+        self._attr_device_info = coordinator.device_info
 
 
 class TsuryPhoneCallNumberText(TsuryPhoneBaseText):

@@ -15,12 +15,24 @@ from .const import (
     DOMAIN, 
     CONF_HOST, 
     CONF_PORT, 
-    CONF_HA_SERVER_URL, 
+    CONF_HA_SERVER_URL,
+    CONF_DEVICE_NAME,
     DEFAULT_PORT,
-    DEFAULT_HA_SERVER_PORT
+    DEFAULT_HA_SERVER_PORT,
+    DEFAULT_DEVICE_NAME
 )
 
+import re
+
 _LOGGER = logging.getLogger(__name__)
+
+
+def validate_device_name(device_name: str) -> bool:
+    """Validate device name format."""
+    # Must start with a letter, only lowercase letters, numbers, and dashes
+    # Cannot have two sequential dashes
+    pattern = r'^[a-z][a-z0-9]*(-[a-z0-9]+)*$'
+    return bool(re.match(pattern, device_name)) and '--' not in device_name
 
 
 def get_ha_server_url(hass: HomeAssistant) -> str:
@@ -41,6 +53,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): cv.string,
         vol.Required(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Required(CONF_DEVICE_NAME, default=DEFAULT_DEVICE_NAME): cv.string,
     }
 )
 
@@ -59,6 +72,11 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
     """Validate the user input allows us to connect."""
     host = data[CONF_HOST]
     port = data[CONF_PORT]
+    device_name = data[CONF_DEVICE_NAME]
+    
+    # Validate device name format
+    if not validate_device_name(device_name):
+        raise InvalidDeviceName
     
     try:
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
@@ -72,7 +90,7 @@ async def validate_input(hass: HomeAssistant, data: Dict[str, Any]) -> Dict[str,
                     raise InvalidDevice
                 
                 return {
-                    "title": "TsuryPhone",
+                    "title": f"TsuryPhone ({device_name})",
                     "device_info": device_info
                 }
                 
@@ -109,6 +127,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors["base"] = "cannot_connect"
         except InvalidDevice:
             errors["base"] = "invalid_device"
+        except InvalidDeviceName:
+            errors["base"] = "invalid_device_name"
         except Exception:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
@@ -143,8 +163,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Combine device and HA server configuration
             combined_config = {**self._device_config, **user_input}
             
-            # Send HA server configuration to device
-            await self._configure_device_ha_server(combined_config)
+            # Send HA server and device name configuration to device
+            await self._configure_device(combined_config)
             
             # Create unique ID based on device info
             device_info = self._device_info["device_info"]
@@ -171,17 +191,18 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
         )
 
-    async def _configure_device_ha_server(self, config: Dict[str, Any]) -> None:
-        """Configure the HA server URL on the device."""
+    async def _configure_device(self, config: Dict[str, Any]) -> None:
+        """Configure the HA server URL and device name on the device."""
         host = config[CONF_HOST]
         port = config[CONF_PORT]
         ha_server_url = config[CONF_HA_SERVER_URL]
+        device_name = config[CONF_DEVICE_NAME]
         
         # Ensure the URL has a protocol
         if not ha_server_url.startswith(('http://', 'https://')):
             ha_server_url = f"http://{ha_server_url}"
         
-        # Send configuration to device
+        # Send HA server configuration to device
         async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
             url = f"http://{host}:{port}/webhooks"
             data = {"server_url": ha_server_url}
@@ -189,6 +210,15 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             async with session.post(url, json=data) as response:
                 response.raise_for_status()
                 _LOGGER.info("Successfully configured HA server URL on TsuryPhone device")
+        
+        # Send device name configuration to device
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+            url = f"http://{host}:{port}/action"
+            data = {"action": "set_device_name", "device_name": device_name}
+            
+            async with session.post(url, json=data) as response:
+                response.raise_for_status()
+                _LOGGER.info("Successfully configured device name on TsuryPhone device: %s", device_name)
 
 
 class CannotConnect(HomeAssistantError):
@@ -197,3 +227,7 @@ class CannotConnect(HomeAssistantError):
 
 class InvalidDevice(HomeAssistantError):
     """Error to indicate device is not a TsuryPhone."""
+
+
+class InvalidDeviceName(HomeAssistantError):
+    """Error to indicate device name format is invalid."""
