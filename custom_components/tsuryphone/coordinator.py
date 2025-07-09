@@ -232,7 +232,9 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def call_number(self, number: str) -> None:
         """Make a call to the specified number."""
+        _LOGGER.info("HA Action: Initiating call to number: %s", number)
         await self._make_action_request(ACTION_CALL, {"number": number})
+        _LOGGER.debug("HA Action: Call request sent successfully")
         
         # Add outgoing call to log
         await self._add_call_log_entry("outgoing", number, 0, "Calling")
@@ -241,7 +243,9 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def hangup(self) -> None:
         """Hang up the current call."""
+        _LOGGER.info("HA Action: Hanging up current call")
         await self._make_action_request(ACTION_HANGUP)
+        _LOGGER.debug("HA Action: Hangup request sent successfully")
         await self.async_request_refresh()
 
     async def reset_device(self) -> None:
@@ -353,30 +357,39 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         payload = {"action": action}
         if data:
             payload.update(data)
-        _LOGGER.debug("Making action request: %s with payload: %s", action, payload)
+        _LOGGER.info("HA Action: Making action request - action: %s, data: %s", action, data)
+        _LOGGER.debug("HA Action: Full payload: %s", payload)
         await self._make_request("POST", ENDPOINT_ACTION, payload)
+        _LOGGER.debug("HA Action: Action request completed successfully")
 
     async def _make_request(self, method: str, endpoint: str, data: Dict[str, Any] = None) -> None:
         """Make a request to the device."""
         url = f"{self.base_url}{endpoint}"
-        _LOGGER.debug("Making %s request to %s with data: %s", method, url, data)
+        _LOGGER.debug("HA HTTP: Making %s request to %s", method, url)
+        if data:
+            _LOGGER.debug("HA HTTP: Request data: %s", data)
         
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
                 if method == "POST" and data:
                     headers = {"Content-Type": "application/json"}
+                    _LOGGER.debug("HA HTTP: Sending POST request with headers: %s", headers)
                     async with session.post(url, json=data, headers=headers) as response:
-                        _LOGGER.debug("Response status: %s", response.status)
+                        _LOGGER.debug("HA HTTP: Response status: %s", response.status)
+                        response_text = await response.text()
+                        _LOGGER.debug("HA HTTP: Response body: %s", response_text)
                         response.raise_for_status()
-                        _LOGGER.debug("Request successful")
+                        _LOGGER.info("HA HTTP: %s request to %s successful", method, endpoint)
                 else:
                     async with session.request(method, url) as response:
-                        _LOGGER.debug("Response status: %s", response.status)
+                        _LOGGER.debug("HA HTTP: Response status: %s", response.status)
+                        response_text = await response.text()
+                        _LOGGER.debug("HA HTTP: Response body: %s", response_text)
                         response.raise_for_status()
-                        _LOGGER.debug("Request successful")
+                        _LOGGER.info("HA HTTP: %s request to %s successful", method, endpoint)
                         
         except asyncio.TimeoutError as err:
-            _LOGGER.error("Timeout during %s request to %s", method, url)
+            _LOGGER.error("HA HTTP: Timeout during %s request to %s", method, url)
             raise UpdateFailed(f"Timeout during {method} request to {url}") from err
         except aiohttp.ClientError as err:
             _LOGGER.error("Error during %s request to %s: %s", method, url, err)
@@ -442,16 +455,30 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         """Handle WebSocket connection and messages."""
         import aiohttp
         
+        connection_attempts = 0
         while True:
             try:
+                connection_attempts += 1
+                _LOGGER.debug("HA WebSocket: Attempting connection #%d to %s", connection_attempts, self.ws_url)
+                
                 session = aiohttp.ClientSession()
                 self._websocket = await session.ws_connect(self.ws_url)
-                _LOGGER.info("WebSocket connected to TsuryPhone")
+                _LOGGER.info("HA WebSocket: Successfully connected to TsuryPhone (attempt #%d)", connection_attempts)
+                connection_attempts = 0  # Reset on successful connection
                 
                 async for msg in self._websocket:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
+                            _LOGGER.debug("HA WebSocket: Received message: %s", msg.data)
                             data = json.loads(msg.data)
+                            _LOGGER.debug("HA WebSocket: Parsed data keys: %s", list(data.keys()))
+                            
+                            # Log state information if present
+                            if "state" in data:
+                                _LOGGER.info("HA WebSocket: State update received - state: %s", data["state"])
+                            if "call" in data:
+                                _LOGGER.info("HA WebSocket: Call update received - %s", data["call"])
+                            
                             # Process real-time status update
                             await self._process_status_for_call_log(data)
                             
@@ -461,23 +488,36 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                                 self.data["status"] = {}
                             
                             # Merge WebSocket data with existing status data (preserve missing fields)
+                            _LOGGER.debug("HA WebSocket: Merging data before update - existing status keys: %s", 
+                                         list(self.data["status"].keys()) if "status" in self.data else "None")
                             self._merge_status_data(self.data["status"], data)
-                            self.async_update_listeners()
+                            _LOGGER.debug("HA WebSocket: Status data after merge - keys: %s", 
+                                         list(self.data["status"].keys()))
                             
-                        except json.JSONDecodeError:
-                            _LOGGER.warning("Received invalid JSON from WebSocket: %s", msg.data)
+                            _LOGGER.debug("HA WebSocket: Notifying %d listeners of data update", 
+                                         len(self.async_update_listeners._listeners) if hasattr(self.async_update_listeners, '_listeners') else 0)
+                            self.async_update_listeners()
+                            _LOGGER.debug("HA WebSocket: Listeners notified successfully")
+                            
+                        except json.JSONDecodeError as e:
+                            _LOGGER.warning("HA WebSocket: Received invalid JSON: %s. Error: %s", msg.data, e)
                     elif msg.type == aiohttp.WSMsgType.ERROR:
-                        _LOGGER.error("WebSocket error: %s", self._websocket.exception())
+                        _LOGGER.error("HA WebSocket: Protocol error: %s", self._websocket.exception())
+                        break
+                    elif msg.type == aiohttp.WSMsgType.CLOSE:
+                        _LOGGER.warning("HA WebSocket: Connection closed by server")
                         break
                 
             except Exception as err:
-                _LOGGER.warning("WebSocket connection error: %s", err)
+                _LOGGER.warning("HA WebSocket: Connection error (attempt #%d): %s", connection_attempts, err)
                 if self._websocket:
                     await self._websocket.close()
                     self._websocket = None
                 
-                # Wait before reconnecting
-                await asyncio.sleep(5)
+                # Exponential backoff with max delay
+                delay = min(5 * (2 ** min(connection_attempts - 1, 3)), 30)
+                _LOGGER.debug("HA WebSocket: Waiting %d seconds before reconnection attempt", delay)
+                await asyncio.sleep(delay)
 
     def _merge_status_data(self, existing_status: Dict[str, Any], new_status: Dict[str, Any]) -> None:
         """Merge new status data with existing data, preserving fields not in the update.
@@ -485,16 +525,19 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         This prevents sensors from becoming 'unknown' when WebSocket updates don't include
         all the data fields that are present in full status requests.
         """
-        _LOGGER.debug("Merging WebSocket status update. New keys: %s, Existing keys: %s", 
+        _LOGGER.debug("HA Merge: Starting merge - new keys: %s, existing keys: %s", 
                       list(new_status.keys()), list(existing_status.keys()))
         
         for key, value in new_status.items():
+            _LOGGER.debug("HA Merge: Processing key '%s' with value: %s", key, value)
+            
             if key == "wifi" and isinstance(value, dict) and "wifi" in existing_status:
                 # For WiFi data, merge nested fields to preserve missing ones
                 if not isinstance(existing_status["wifi"], dict):
                     existing_status["wifi"] = {}
                 for wifi_key, wifi_value in value.items():
                     existing_status["wifi"][wifi_key] = wifi_value
+                    _LOGGER.debug("HA Merge: Updated wifi.%s = %s", wifi_key, wifi_value)
                 # Keep existing WiFi fields that weren't updated
             elif key == "call" and isinstance(value, dict) and "call" in existing_status:
                 # For call data, merge nested fields
@@ -502,15 +545,19 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                     existing_status["call"] = {}
                 for call_key, call_value in value.items():
                     existing_status["call"][call_key] = call_value
+                    _LOGGER.debug("HA Merge: Updated call.%s = %s", call_key, call_value)
             else:
                 # For other fields, update directly
+                old_value = existing_status.get(key, "<not set>")
                 existing_status[key] = value
+                _LOGGER.debug("HA Merge: Updated %s: %s -> %s", key, old_value, value)
         
         # Log what was preserved vs updated for debugging
         if _LOGGER.isEnabledFor(logging.DEBUG):
             preserved_keys = set(existing_status.keys()) - set(new_status.keys())
             if preserved_keys:
-                _LOGGER.debug("Preserved existing status fields: %s", preserved_keys)
+                _LOGGER.debug("HA Merge: Preserved existing status fields: %s", preserved_keys)
+            _LOGGER.debug("HA Merge: Final status keys: %s", list(existing_status.keys()))
 
     async def _process_status_for_call_log(self, status: Dict[str, Any]) -> None:
         """Process status data for call log tracking."""
