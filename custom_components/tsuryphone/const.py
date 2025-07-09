@@ -6,7 +6,6 @@ DOMAIN = "tsuryphone"
 PLATFORMS = [
     "binary_sensor",
     "button", 
-    "number",
     "select",
     "sensor",
     "switch",
@@ -45,14 +44,12 @@ ENDPOINT_ACTION = "/action"
 ENDPOINT_ACTION_CALL = "/action/call"
 ENDPOINT_ACTION_HANGUP = "/action/hangup"
 ENDPOINT_ACTION_RESET = "/action/reset"
-ENDPOINT_ACTION_RING = "/action/ring"
 ENDPOINT_ACTION_MAINTENANCE_MODE = "/action/maintenance_mode"
 ENDPOINT_ACTION_SWITCH_CALL_WAITING = "/action/switch_call_waiting"
 
 # Action types for the unified endpoint
 ACTION_CALL = "call_custom"
 ACTION_HANGUP = "hangup"
-ACTION_RING = "ring"
 ACTION_RING_PATTERN = "ring_pattern"
 ACTION_DND = "dnd_force"
 ACTION_DND_SCHEDULE = "dnd_schedule"

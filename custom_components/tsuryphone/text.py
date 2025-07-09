@@ -146,7 +146,7 @@ class TsuryPhoneRemovePhonebookText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "remove_phonebook")
-        self._attr_name = "TsuryPhone Remove Phonebook Entry"
+        self._attr_name = "Remove Phonebook Entry"
         self._attr_icon = "mdi:account-minus"
         self._attr_mode = TextMode.TEXT
         self._attr_native_value = ""
@@ -218,7 +218,7 @@ class TsuryPhoneRemoveBlockedText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "remove_blocked")
-        self._attr_name = "TsuryPhone Remove Blocked Number"
+        self._attr_name = "Remove Blocked Number"
         self._attr_icon = "mdi:phone-check"
         self._attr_mode = TextMode.TEXT
         self._attr_pattern = r"^$|^[\d\+\-\(\)\s\.#\*]+$"
@@ -255,7 +255,7 @@ class TsuryPhoneRingPatternText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "ring_pattern")
-        self._attr_name = "TsuryPhone Ring Pattern"
+        self._attr_name = "Ring Pattern"
         self._attr_icon = "mdi:bell-ring-outline"
         self._attr_mode = TextMode.TEXT
         # Pattern for ring patterns: comma-separated numbers optionally followed by xN for repeats
@@ -279,7 +279,7 @@ class TsuryPhoneAddWebhookText(TsuryPhoneBaseText):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the text entity."""
         super().__init__(coordinator, "add_webhook")
-        self._attr_name = "TsuryPhone Add Webhook Shortcut"
+        self._attr_name = "Add Webhook Shortcut"
         self._attr_icon = "mdi:webhook"
         self._attr_mode = TextMode.TEXT
         self._attr_pattern = r"^$|^[a-zA-Z0-9_-]+:[a-zA-Z0-9_.-]+$"

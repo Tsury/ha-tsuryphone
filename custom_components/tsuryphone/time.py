@@ -48,7 +48,7 @@ class TsuryPhoneDndStartTime(TsuryPhoneBaseTime):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the time entity."""
         super().__init__(coordinator, "dnd_start_time")
-        self._attr_name = "TsuryPhone DnD Start Time"
+        self._attr_name = "DnD Start Time"
         self._attr_icon = "mdi:clock-start"
 
     @property
@@ -87,7 +87,7 @@ class TsuryPhoneDndEndTime(TsuryPhoneBaseTime):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the time entity."""
         super().__init__(coordinator, "dnd_end_time")
-        self._attr_name = "TsuryPhone DnD End Time"
+        self._attr_name = "DnD End Time"
         self._attr_icon = "mdi:clock-end"
 
     @property

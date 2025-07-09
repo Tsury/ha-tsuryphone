@@ -68,7 +68,7 @@ class TsuryPhoneStateSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "state")
-        self._attr_name = "TsuryPhone State"
+        self._attr_name = "State"
         self._attr_icon = "mdi:phone"
 
     @property
@@ -111,7 +111,7 @@ class TsuryPhoneUptimeSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "uptime")
-        self._attr_name = "TsuryPhone Uptime"
+        self._attr_name = "Uptime"
         self._attr_icon = "mdi:clock-outline"
         self._attr_device_class = SensorDeviceClass.DURATION
         self._attr_native_unit_of_measurement = "ms"
@@ -130,7 +130,7 @@ class TsuryPhoneFreeHeapSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "free_heap")
-        self._attr_name = "TsuryPhone Free Heap"
+        self._attr_name = "Free Heap"
         self._attr_icon = "mdi:memory"
         self._attr_device_class = SensorDeviceClass.DATA_SIZE
         self._attr_native_unit_of_measurement = "B"
@@ -150,7 +150,7 @@ class TsuryPhoneWifiRSSISensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "wifi_rssi")
-        self._attr_name = "TsuryPhone WiFi RSSI"
+        self._attr_name = "WiFi RSSI"
         self._attr_icon = "mdi:wifi"
         self._attr_device_class = SensorDeviceClass.SIGNAL_STRENGTH
         self._attr_native_unit_of_measurement = "dBm"
@@ -184,7 +184,7 @@ class TsuryPhoneTotalCallsSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "total_calls")
-        self._attr_name = "TsuryPhone Total Calls"
+        self._attr_name = "Total Calls"
         self._attr_icon = "mdi:phone-log"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
 
@@ -202,7 +202,7 @@ class TsuryPhoneIncomingCallsSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "incoming_calls")
-        self._attr_name = "TsuryPhone Incoming Calls"
+        self._attr_name = "Incoming Calls"
         self._attr_icon = "mdi:phone-incoming"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
 
@@ -220,7 +220,7 @@ class TsuryPhoneOutgoingCallsSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "outgoing_calls")
-        self._attr_name = "TsuryPhone Outgoing Calls"
+        self._attr_name = "Outgoing Calls"
         self._attr_icon = "mdi:phone-outgoing"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
 
@@ -238,7 +238,7 @@ class TsuryPhoneBlockedCallsSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "blocked_calls")
-        self._attr_name = "TsuryPhone Blocked Calls"
+        self._attr_name = "Blocked Calls"
         self._attr_icon = "mdi:phone-off"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
 
@@ -256,7 +256,7 @@ class TsuryPhoneResetsSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "resets")
-        self._attr_name = "TsuryPhone Resets"
+        self._attr_name = "Resets"
         self._attr_icon = "mdi:restart"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
 
@@ -274,7 +274,7 @@ class TsuryPhoneCallNumberSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "call_number")
-        self._attr_name = "TsuryPhone Call Number"
+        self._attr_name = "Call Number"
         self._attr_icon = "mdi:phone-dial"
 
     @property
@@ -293,7 +293,7 @@ class TsuryPhoneCallIdSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "call_id")
-        self._attr_name = "TsuryPhone Call ID"
+        self._attr_name = "Call ID"
         self._attr_icon = "mdi:identifier"
 
     @property
@@ -312,7 +312,7 @@ class TsuryPhoneCpuFreqSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "cpu_freq")
-        self._attr_name = "TsuryPhone CPU Frequency"
+        self._attr_name = "CPU Frequency"
         self._attr_icon = "mdi:chip"
         self._attr_native_unit_of_measurement = "MHz"
 
@@ -330,7 +330,7 @@ class TsuryPhoneFlashSizeSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "flash_size")
-        self._attr_name = "TsuryPhone Flash Size"
+        self._attr_name = "Flash Size"
         self._attr_icon = "mdi:sd"
         self._attr_device_class = SensorDeviceClass.DATA_SIZE
         self._attr_native_unit_of_measurement = "B"
@@ -349,7 +349,7 @@ class TsuryPhoneSketchSizeSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "sketch_size")
-        self._attr_name = "TsuryPhone Sketch Size"
+        self._attr_name = "Sketch Size"
         self._attr_icon = "mdi:file-code"
         self._attr_device_class = SensorDeviceClass.DATA_SIZE
         self._attr_native_unit_of_measurement = "B"
@@ -368,7 +368,7 @@ class TsuryPhoneCallLogSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "call_log")
-        self._attr_name = "TsuryPhone Call Log"
+        self._attr_name = "Call Log"
         self._attr_icon = "mdi:phone-log"
 
     @property
@@ -414,7 +414,7 @@ class TsuryPhoneLastCallSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "last_call")
-        self._attr_name = "TsuryPhone Last Call"
+        self._attr_name = "Last Call"
         self._attr_icon = "mdi:phone-recent"
 
     @property
@@ -446,7 +446,7 @@ class TsuryPhoneTotalTalkTimeSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "total_talk_time")
-        self._attr_name = "TsuryPhone Total Talk Time"
+        self._attr_name = "Total Talk Time"
         self._attr_icon = "mdi:clock-time-four"
 
     @property
@@ -483,7 +483,7 @@ class TsuryPhoneWebhookCountSensor(TsuryPhoneBaseSensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator, "webhook_count")
-        self._attr_name = "TsuryPhone Webhook Shortcuts Count"
+        self._attr_name = "Webhook Shortcuts Count"
         self._attr_icon = "mdi:webhook"
         self._attr_state_class = SensorStateClass.MEASUREMENT
 

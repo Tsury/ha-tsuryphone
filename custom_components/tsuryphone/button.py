@@ -50,7 +50,7 @@ class TsuryPhoneHangupButton(TsuryPhoneBaseButton):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "hangup")
-        self._attr_name = "TsuryPhone Hangup"
+        self._attr_name = "Hangup"
         self._attr_icon = "mdi:phone-hangup"
 
     async def async_press(self) -> None:
@@ -73,7 +73,7 @@ class TsuryPhoneResetButton(TsuryPhoneBaseButton):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "reset")
-        self._attr_name = "TsuryPhone Reset"
+        self._attr_name = "Reset"
         self._attr_icon = "mdi:restart"
 
     async def async_press(self) -> None:
@@ -87,36 +87,26 @@ class TsuryPhoneRingButton(TsuryPhoneBaseButton):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "ring")
-        self._attr_name = "TsuryPhone Ring"
+        self._attr_name = "Ring"
         self._attr_icon = "mdi:bell-ring"
 
     async def async_press(self) -> None:
         """Handle the button press."""
-        # Try to get ring pattern from the text entity first
+        # Get ring pattern from the ring pattern text entity
         hass = self.coordinator.hass
         pattern_entity_id = f"text.tsuryphone_ring_pattern"
         pattern_state = hass.states.get(pattern_entity_id)
         
         if pattern_state and pattern_state.state and pattern_state.state.strip():
-            # Use ring pattern if available
+            # Use ring pattern
             pattern = pattern_state.state.strip()
             await self.coordinator.ring_device_with_pattern(pattern)
             _LOGGER.info("Rang device with pattern: %s", pattern)
         else:
-            # Fall back to duration-based ring for backward compatibility
-            duration_ms = 5000
-            
-            # Try to get from number entity
-            number_entity_id = f"number.tsuryphone_ring_duration_seconds"
-            number_state = hass.states.get(number_entity_id)
-            if number_state and number_state.state:
-                try:
-                    duration_ms = int(float(number_state.state) * 1000)
-                except (ValueError, TypeError):
-                    duration_ms = 5000
-            
-            await self.coordinator.ring_device(duration_ms)
-            _LOGGER.info("Rang device for %d ms", duration_ms)
+            # Default pattern if none set
+            default_pattern = "500,500,500,500x3"
+            await self.coordinator.ring_device_with_pattern(default_pattern)
+            _LOGGER.info("Rang device with default pattern: %s", default_pattern)
         
         await self.coordinator.async_request_refresh()
 
@@ -127,7 +117,7 @@ class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "switch_call_waiting")
-        self._attr_name = "TsuryPhone Switch Call Waiting"
+        self._attr_name = "Switch Call Waiting"
         self._attr_icon = "mdi:phone-forward"
 
     async def async_press(self) -> None:
@@ -151,7 +141,7 @@ class TsuryPhoneRefreshDataButton(TsuryPhoneBaseButton):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the button."""
         super().__init__(coordinator, "refresh_data")
-        self._attr_name = "TsuryPhone Refresh Data"
+        self._attr_name = "Refresh Data"
         self._attr_icon = "mdi:refresh"
 
     async def async_press(self) -> None:

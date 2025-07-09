@@ -26,7 +26,6 @@ from .const import (
     ENDPOINT_ACTION,
     ACTION_CALL,
     ACTION_HANGUP,
-    ACTION_RING,
     ACTION_RING_PATTERN,
     ACTION_DND,
     ACTION_DND_SCHEDULE,
@@ -258,11 +257,6 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
     async def reset_device(self) -> None:
         """Reset the device."""
         await self._make_action_request(ACTION_RESET)
-        await self.async_request_refresh()
-
-    async def ring_device(self, duration_ms: int) -> None:
-        """Ring the device for specified duration."""
-        await self._make_action_request(ACTION_RING, {"duration": duration_ms})
         await self.async_request_refresh()
 
     async def ring_device_with_pattern(self, pattern: str) -> None:

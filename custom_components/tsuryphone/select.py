@@ -102,7 +102,7 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the select."""
         super().__init__(coordinator, "blocked_numbers")
-        self._attr_name = "TsuryPhone Blocked Numbers"
+        self._attr_name = "Blocked Numbers"
         self._attr_icon = "mdi:phone-off"
         
     @property
@@ -202,7 +202,7 @@ class TsuryPhoneWebhookShortcutsSelect(TsuryPhoneBaseSelect):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the select."""
         super().__init__(coordinator, "webhook_shortcuts")
-        self._attr_name = "TsuryPhone Webhook Shortcuts"
+        self._attr_name = "Webhook Shortcuts"
         self._attr_icon = "mdi:webhook"
 
     @property
@@ -268,7 +268,7 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the select."""
         super().__init__(coordinator, "remove_webhook")
-        self._attr_name = "TsuryPhone Remove Webhook Shortcut"
+        self._attr_name = "Remove Webhook Shortcut"
         self._attr_icon = "mdi:webhook-off"
 
     @property

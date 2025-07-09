@@ -52,7 +52,7 @@ class TsuryPhoneCallActiveBinarySensor(TsuryPhoneBaseBinarySensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator, "call_active")
-        self._attr_name = "TsuryPhone Call Active"
+        self._attr_name = "Call Active"
         self._attr_icon = "mdi:phone"
 
     @property
@@ -85,7 +85,7 @@ class TsuryPhoneDndBinarySensor(TsuryPhoneBaseBinarySensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator, "dnd_active")
-        self._attr_name = "TsuryPhone Do Not Disturb"
+        self._attr_name = "Do Not Disturb"
         self._attr_icon = "mdi:bell-off"
 
     @property
@@ -117,7 +117,7 @@ class TsuryPhoneWifiConnectedBinarySensor(TsuryPhoneBaseBinarySensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator, "wifi_connected")
-        self._attr_name = "TsuryPhone WiFi Connected"
+        self._attr_name = "WiFi Connected"
         self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     @property
@@ -148,7 +148,7 @@ class TsuryPhoneCallWaitingBinarySensor(TsuryPhoneBaseBinarySensor):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator, "call_waiting")
-        self._attr_name = "TsuryPhone Call Waiting"
+        self._attr_name = "Call Waiting"
         self._attr_icon = "mdi:phone-plus"
 
     @property

@@ -48,7 +48,7 @@ class TsuryPhoneDndForceSwitch(TsuryPhoneBaseSwitch):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the switch."""
         super().__init__(coordinator, "dnd_force")
-        self._attr_name = "TsuryPhone DnD Force"
+        self._attr_name = "DnD Force"
         self._attr_icon = "mdi:bell-off-outline"
 
     @property
@@ -75,7 +75,7 @@ class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the switch."""
         super().__init__(coordinator, "dnd_schedule")
-        self._attr_name = "TsuryPhone DnD Schedule"
+        self._attr_name = "DnD Schedule"
         self._attr_icon = "mdi:calendar-clock"
 
     @property
@@ -102,7 +102,7 @@ class TsuryPhoneMaintenanceModeSwitch(TsuryPhoneBaseSwitch):
     def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
         """Initialize the switch."""
         super().__init__(coordinator, "maintenance_mode")
-        self._attr_name = "TsuryPhone Maintenance Mode"
+        self._attr_name = "Maintenance Mode"
         self._attr_icon = "mdi:wrench"
 
     @property
