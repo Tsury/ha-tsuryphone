@@ -26,6 +26,7 @@ SERVICE_SET_DND_HOURS = "set_dnd_hours"
 SERVICE_SET_DND_FORCE_ENABLED = "set_dnd_force_enabled"
 SERVICE_SET_DND_SCHEDULE_ENABLED = "set_dnd_schedule_enabled"
 SERVICE_CLEAR_CALL_LOG = "clear_call_log"
+SERVICE_REFRESH_STATUS = "refresh_status"
 
 CALL_NUMBER_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
@@ -100,6 +101,10 @@ SET_DND_ENABLED_SCHEMA = vol.Schema({
 })
 
 CLEAR_CALL_LOG_SCHEMA = vol.Schema({
+    vol.Required("device_id"): cv.string,
+})
+
+REFRESH_STATUS_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
 })
 
@@ -426,6 +431,24 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         else:
             _LOGGER.error("Device %s not found", device_id)
 
+    async def handle_refresh_status(call: ServiceCall) -> None:
+        """Handle refresh status service."""
+        device_id = call.data.get("device_id")
+        
+        # Find coordinator for this device
+        coordinator = None
+        for entry_id, coord in hass.data[DOMAIN].items():
+            if hasattr(coord, "base_url") and device_id in coord.base_url:
+                coordinator = coord
+                break
+                
+        if coordinator:
+            # Force a full status refresh
+            await coordinator.refresh_full_status()
+            _LOGGER.info("Refreshed full status for device %s", device_id)
+        else:
+            _LOGGER.error("Device %s not found", device_id)
+
     # Register services
     hass.services.async_register(
         DOMAIN, SERVICE_CALL_NUMBER, handle_call_number, schema=CALL_NUMBER_SCHEMA
@@ -494,6 +517,10 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     hass.services.async_register(
         DOMAIN, SERVICE_CLEAR_CALL_LOG, handle_clear_call_log, schema=CLEAR_CALL_LOG_SCHEMA
     )
+    
+    hass.services.async_register(
+        DOMAIN, SERVICE_REFRESH_STATUS, handle_refresh_status, schema=REFRESH_STATUS_SCHEMA
+    )
 
 
 async def async_unload_services(hass: HomeAssistant) -> None:
@@ -512,3 +539,4 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_FORCE_ENABLED)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_SCHEDULE_ENABLED)
     hass.services.async_remove(DOMAIN, SERVICE_CLEAR_CALL_LOG)
+    hass.services.async_remove(DOMAIN, SERVICE_REFRESH_STATUS)

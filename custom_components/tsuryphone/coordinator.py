@@ -455,9 +455,13 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                             # Process real-time status update
                             await self._process_status_for_call_log(data)
                             
-                            # Update the coordinator data immediately
+                            # Update the coordinator data immediately with partial update
                             self.data = self.data or {}
-                            self.data["status"] = data
+                            if "status" not in self.data:
+                                self.data["status"] = {}
+                            
+                            # Merge WebSocket data with existing status data (preserve missing fields)
+                            self._merge_status_data(self.data["status"], data)
                             self.async_update_listeners()
                             
                         except json.JSONDecodeError:
@@ -474,6 +478,39 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                 
                 # Wait before reconnecting
                 await asyncio.sleep(5)
+
+    def _merge_status_data(self, existing_status: Dict[str, Any], new_status: Dict[str, Any]) -> None:
+        """Merge new status data with existing data, preserving fields not in the update.
+        
+        This prevents sensors from becoming 'unknown' when WebSocket updates don't include
+        all the data fields that are present in full status requests.
+        """
+        _LOGGER.debug("Merging WebSocket status update. New keys: %s, Existing keys: %s", 
+                      list(new_status.keys()), list(existing_status.keys()))
+        
+        for key, value in new_status.items():
+            if key == "wifi" and isinstance(value, dict) and "wifi" in existing_status:
+                # For WiFi data, merge nested fields to preserve missing ones
+                if not isinstance(existing_status["wifi"], dict):
+                    existing_status["wifi"] = {}
+                for wifi_key, wifi_value in value.items():
+                    existing_status["wifi"][wifi_key] = wifi_value
+                # Keep existing WiFi fields that weren't updated
+            elif key == "call" and isinstance(value, dict) and "call" in existing_status:
+                # For call data, merge nested fields
+                if not isinstance(existing_status["call"], dict):
+                    existing_status["call"] = {}
+                for call_key, call_value in value.items():
+                    existing_status["call"][call_key] = call_value
+            else:
+                # For other fields, update directly
+                existing_status[key] = value
+        
+        # Log what was preserved vs updated for debugging
+        if _LOGGER.isEnabledFor(logging.DEBUG):
+            preserved_keys = set(existing_status.keys()) - set(new_status.keys())
+            if preserved_keys:
+                _LOGGER.debug("Preserved existing status fields: %s", preserved_keys)
 
     async def _process_status_for_call_log(self, status: Dict[str, Any]) -> None:
         """Process status data for call log tracking."""
@@ -671,3 +708,24 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             # Fetch DND data on-demand if not available
             self.data["dnd"] = await self._fetch_dnd_data()
         return self.data.get("dnd", {"force_enabled": False, "schedule_enabled": False})
+
+    async def refresh_full_status(self) -> None:
+        """Force a full status refresh to ensure all data is up to date."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                # Get fresh full status data
+                status = await self._fetch_endpoint(session, ENDPOINT_STATUS)
+                
+                # Update status data completely
+                if not self.data:
+                    self.data = {}
+                self.data["status"] = status
+                
+                # Process for call log tracking
+                await self._process_status_for_call_log(status)
+                
+                _LOGGER.debug("Full status refresh completed")
+                self.async_update_listeners()
+                
+        except Exception as err:
+            _LOGGER.warning("Failed to refresh full status: %s", err)

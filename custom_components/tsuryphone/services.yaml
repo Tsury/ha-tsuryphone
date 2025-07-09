@@ -304,3 +304,25 @@ remove_webhook_shortcut:
       example: "alarm"
       selector:
         text:
+
+clear_call_log:
+  name: Clear Call Log
+  description: Clear all entries from the call log
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:
+
+refresh_status:
+  name: Refresh Status
+  description: Force a full status refresh to restore missing sensor values
+  fields:
+    device_id:
+      name: Device ID
+      description: The device ID of the TsuryPhone
+      required: true
+      selector:
+        text:

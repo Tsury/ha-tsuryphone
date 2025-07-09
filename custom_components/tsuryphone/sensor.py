@@ -166,7 +166,10 @@ class TsuryPhoneWifiRSSISensor(TsuryPhoneBaseSensor):
         """Return the WiFi RSSI."""
         if "status" in self.coordinator.data:
             wifi = self.coordinator.data["status"].get("wifi", {})
-            return wifi.get("rssi")
+            rssi = wifi.get("rssi")
+            # Only return None if explicitly None, not if the field is missing
+            if rssi is not None:
+                return rssi
         return None
 
     @property
@@ -176,12 +179,19 @@ class TsuryPhoneWifiRSSISensor(TsuryPhoneBaseSensor):
             return {}
         
         wifi = self.coordinator.data["status"].get("wifi", {})
-        return {
-            "connected": wifi.get("connected"),
-            "ip_address": wifi.get("ip"),
-            "ssid": wifi.get("ssid"),
-            "mac_address": wifi.get("mac"),
-        }
+        attrs = {}
+        
+        # Only include attributes that are actually present
+        if "connected" in wifi:
+            attrs["connected"] = wifi.get("connected")
+        if "ip" in wifi:
+            attrs["ip_address"] = wifi.get("ip")
+        if "ssid" in wifi:
+            attrs["ssid"] = wifi.get("ssid")
+        if "mac" in wifi:
+            attrs["mac_address"] = wifi.get("mac")
+            
+        return attrs
 
 
 class TsuryPhoneTotalCallsSensor(TsuryPhoneBaseSensor):
