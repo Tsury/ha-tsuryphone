@@ -92,7 +92,7 @@ class TsuryPhoneDndBinarySensor(TsuryPhoneBaseBinarySensor):
     def is_on(self) -> bool:
         """Return true if DnD is active."""
         if "status" in self.coordinator.data:
-            return self.coordinator.data["status"].get("dnd_enabled", False)
+            return self.coordinator.data["status"].get("dnd", False)
         return False
 
     @property

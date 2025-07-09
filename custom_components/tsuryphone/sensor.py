@@ -46,6 +46,11 @@ async def async_setup_entry(
         TsuryPhoneLastCallSensor(coordinator),
         TsuryPhoneTotalTalkTimeSensor(coordinator),
         TsuryPhoneWebhookCountSensor(coordinator),
+        TsuryPhoneSketchFreeSensor(coordinator),
+        TsuryPhoneChipModelSensor(coordinator),
+        TsuryPhoneChipRevisionSensor(coordinator),
+        TsuryPhoneSdkVersionSensor(coordinator),
+        TsuryPhoneDeviceNameSensor(coordinator),
     ]
 
     async_add_entities(entities)
@@ -119,8 +124,8 @@ class TsuryPhoneUptimeSensor(TsuryPhoneBaseSensor):
     @property
     def native_value(self) -> StateType:
         """Return the uptime in milliseconds."""
-        if "status" in self.coordinator.data:
-            return self.coordinator.data["status"].get("uptime")
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("uptime")
         return None
 
 
@@ -139,8 +144,8 @@ class TsuryPhoneFreeHeapSensor(TsuryPhoneBaseSensor):
     @property
     def native_value(self) -> StateType:
         """Return the free heap in bytes."""
-        if "status" in self.coordinator.data:
-            return self.coordinator.data["status"].get("free_heap")
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("free_heap")
         return None
 
 
@@ -175,6 +180,7 @@ class TsuryPhoneWifiRSSISensor(TsuryPhoneBaseSensor):
             "connected": wifi.get("connected"),
             "ip_address": wifi.get("ip"),
             "ssid": wifi.get("ssid"),
+            "mac_address": wifi.get("mac"),
         }
 
 
@@ -192,7 +198,7 @@ class TsuryPhoneTotalCallsSensor(TsuryPhoneBaseSensor):
     def native_value(self) -> StateType:
         """Return the total calls."""
         if "stats" in self.coordinator.data:
-            return self.coordinator.data["stats"].get("total_calls")
+            return self.coordinator.data["stats"].get("calls")
         return None
 
 
@@ -210,7 +216,7 @@ class TsuryPhoneIncomingCallsSensor(TsuryPhoneBaseSensor):
     def native_value(self) -> StateType:
         """Return the incoming calls."""
         if "stats" in self.coordinator.data:
-            return self.coordinator.data["stats"].get("total_incoming_calls")
+            return self.coordinator.data["stats"].get("incoming")
         return None
 
 
@@ -228,7 +234,7 @@ class TsuryPhoneOutgoingCallsSensor(TsuryPhoneBaseSensor):
     def native_value(self) -> StateType:
         """Return the outgoing calls."""
         if "stats" in self.coordinator.data:
-            return self.coordinator.data["stats"].get("total_outgoing_calls")
+            return self.coordinator.data["stats"].get("outgoing")
         return None
 
 
@@ -246,7 +252,7 @@ class TsuryPhoneBlockedCallsSensor(TsuryPhoneBaseSensor):
     def native_value(self) -> StateType:
         """Return the blocked calls."""
         if "stats" in self.coordinator.data:
-            return self.coordinator.data["stats"].get("total_blocked_calls")
+            return self.coordinator.data["stats"].get("blocked")
         return None
 
 
@@ -264,7 +270,7 @@ class TsuryPhoneResetsSensor(TsuryPhoneBaseSensor):
     def native_value(self) -> StateType:
         """Return the total resets."""
         if "stats" in self.coordinator.data:
-            return self.coordinator.data["stats"].get("total_resets")
+            return self.coordinator.data["stats"].get("resets")
         return None
 
 
@@ -282,8 +288,8 @@ class TsuryPhoneCallNumberSensor(TsuryPhoneBaseSensor):
         """Return the current call number."""
         if "status" in self.coordinator.data:
             call = self.coordinator.data["status"].get("call", {})
-            if call.get("active"):
-                return call.get("number")
+            # Show call number whenever there's a call (incoming, in progress, etc.)
+            return call.get("number")
         return None
 
 
@@ -301,8 +307,8 @@ class TsuryPhoneCallIdSensor(TsuryPhoneBaseSensor):
         """Return the current call ID."""
         if "status" in self.coordinator.data:
             call = self.coordinator.data["status"].get("call", {})
-            if call.get("active"):
-                return call.get("id")
+            # Show call ID whenever there's a call (incoming, in progress, etc.)
+            return call.get("id")
         return None
 
 
@@ -515,3 +521,90 @@ class TsuryPhoneWebhookCountSensor(TsuryPhoneBaseSensor):
                     "total_webhooks": len(webhook_data["entries"])
                 }
         return {"webhook_shortcuts": {}, "total_webhooks": 0}
+
+
+class TsuryPhoneSketchFreeSensor(TsuryPhoneBaseSensor):
+    """Sensor for free sketch space."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "sketch_free")
+        self._attr_name = "Free Sketch Space"
+        self._attr_icon = "mdi:file-code-outline"
+        self._attr_device_class = SensorDeviceClass.DATA_SIZE
+        self._attr_native_unit_of_measurement = "B"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the free sketch space."""
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("sketch_free")
+        return None
+
+
+class TsuryPhoneChipModelSensor(TsuryPhoneBaseSensor):
+    """Sensor for ESP32 chip model."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "chip_model")
+        self._attr_name = "Chip Model"
+        self._attr_icon = "mdi:chip"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the chip model."""
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("chip_model")
+        return None
+
+
+class TsuryPhoneChipRevisionSensor(TsuryPhoneBaseSensor):
+    """Sensor for ESP32 chip revision."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "chip_revision")
+        self._attr_name = "Chip Revision"
+        self._attr_icon = "mdi:chip"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the chip revision."""
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("chip_revision")
+        return None
+
+
+class TsuryPhoneSdkVersionSensor(TsuryPhoneBaseSensor):
+    """Sensor for ESP32 SDK version."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "sdk_version")
+        self._attr_name = "SDK Version"
+        self._attr_icon = "mdi:information"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the SDK version."""
+        if "stats" in self.coordinator.data:
+            return self.coordinator.data["stats"].get("sdk_version")
+        return None
+
+
+class TsuryPhoneDeviceNameSensor(TsuryPhoneBaseSensor):
+    """Sensor for device name."""
+
+    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator, "device_name")
+        self._attr_name = "Device Name"
+        self._attr_icon = "mdi:tag"
+
+    @property
+    def native_value(self) -> StateType:
+        """Return the device name."""
+        if "status" in self.coordinator.data:
+            return self.coordinator.data["status"].get("device_name")
+        return None

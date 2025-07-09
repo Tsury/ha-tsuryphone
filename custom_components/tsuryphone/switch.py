@@ -125,7 +125,7 @@ class TsuryPhoneMaintenanceModeSwitch(TsuryPhoneBaseSwitch):
     def is_on(self) -> bool:
         """Return true if maintenance mode is enabled."""
         if "status" in self.coordinator.data:
-            return self.coordinator.data["status"].get("maintenance_mode", False)
+            return self.coordinator.data["status"].get("maintenance", False)
         return False
 
     async def async_turn_on(self, **kwargs: Any) -> None:

@@ -62,7 +62,14 @@ class TsuryPhoneHangupButton(TsuryPhoneBaseButton):
     def available(self) -> bool:
         """Return if button is available."""
         if "status" in self.coordinator.data:
-            call = self.coordinator.data["status"].get("call", {})
+            status = self.coordinator.data["status"]
+            state = status.get("state", "")
+            # Available during any call-related state
+            call_states = ["IncomingCall", "IncomingCallRing", "InCall", "Dialing"]
+            if state in call_states:
+                return True
+            # Also check if call is marked as active (fallback)
+            call = status.get("call", {})
             return call.get("active", False)
         return False
 
