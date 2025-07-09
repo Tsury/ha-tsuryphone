@@ -142,6 +142,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         self._websocket = None
         self._websocket_task = None
         self._last_stats = {}
+        self._websocket_shutdown = False  # Flag to indicate shutdown
         
         # HA server configuration (for webhooks)
         self.ha_server_url = entry.data.get(CONF_HA_SERVER_URL, "")
@@ -181,9 +182,46 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             "configuration_url": self.base_url,
         }
 
+    @property
+    def websocket_connected(self) -> bool:
+        """Check if WebSocket is currently connected."""
+        return (self._websocket is not None and 
+                not self._websocket.closed and 
+                self._websocket_task is not None and 
+                not self._websocket_task.done())
+
+    async def ensure_websocket_connection(self) -> None:
+        """Ensure WebSocket connection is active, restart if needed."""
+        if not self.websocket_connected:
+            _LOGGER.warning("HA WebSocket: Connection lost, restarting...")
+            await self._start_websocket()
+        else:
+            # Test connection health with a ping
+            try:
+                if self._websocket:
+                    self._websocket.ping()
+                    _LOGGER.debug("HA WebSocket: Connection health check ping sent")
+            except Exception as ping_err:
+                _LOGGER.warning("HA WebSocket: Connection health check failed: %s, restarting...", ping_err)
+                await self._start_websocket()
+
     async def _async_update_data(self) -> Dict[str, Any]:
         """Fetch data from API endpoint - only poll critical real-time data."""
         try:
+            # Ensure WebSocket connection is maintained
+            await self.ensure_websocket_connection()
+            
+            # Log WebSocket connection status periodically  
+            if hasattr(self, '_last_ws_status_log'):
+                time_since_last_log = time.time() - self._last_ws_status_log
+                if time_since_last_log > 60:  # Log every minute
+                    _LOGGER.info("HA WebSocket: Connection status - Connected: %s, Task active: %s", 
+                               self.websocket_connected, 
+                               self._websocket_task is not None and not self._websocket_task.done())
+                    self._last_ws_status_log = time.time()
+            else:
+                self._last_ws_status_log = time.time()
+            
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
                 # Only poll critical real-time data
                 status_task = self._fetch_endpoint(session, ENDPOINT_STATUS)
@@ -404,7 +442,8 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         if self.ha_server_url:
             await self._send_ha_server_config()
         
-        # Start WebSocket connection
+        # Start WebSocket connection (with small delay to let firmware initialize)
+        await asyncio.sleep(2)
         await self._start_websocket()
 
     async def _send_ha_server_config(self) -> None:
@@ -422,51 +461,98 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
     
     async def async_shutdown(self) -> None:
         """Shutdown the coordinator."""
+        _LOGGER.debug("HA Coordinator: Starting shutdown process")
+        
+        # Set shutdown flag to stop WebSocket reconnection attempts
+        self._websocket_shutdown = True
+        
         # Stop WebSocket connection
         await self._stop_websocket()
         
         # Save call log to storage
         await self._save_call_log()
+        _LOGGER.debug("HA Coordinator: Shutdown complete")
 
     async def _start_websocket(self) -> None:
         """Start WebSocket connection for real-time updates."""
         try:
             import aiohttp
+            # Cancel any existing WebSocket task first
+            if self._websocket_task:
+                await self._stop_websocket()
+            
             self._websocket_task = asyncio.create_task(self._websocket_handler())
-            _LOGGER.info("Starting WebSocket connection to %s", self.ws_url)
+            _LOGGER.info("HA WebSocket: Starting WebSocket connection to %s", self.ws_url)
         except Exception as err:
-            _LOGGER.warning("Failed to start WebSocket connection: %s", err)
+            _LOGGER.error("HA WebSocket: Failed to start WebSocket connection: %s", err)
 
     async def _stop_websocket(self) -> None:
         """Stop WebSocket connection."""
+        _LOGGER.debug("HA WebSocket: Stopping WebSocket connection")
+        
         if self._websocket_task:
+            _LOGGER.debug("HA WebSocket: Cancelling WebSocket task")
             self._websocket_task.cancel()
             try:
                 await self._websocket_task
             except asyncio.CancelledError:
-                pass
+                _LOGGER.debug("HA WebSocket: WebSocket task cancelled successfully")
+            except Exception as err:
+                _LOGGER.warning("HA WebSocket: Error while cancelling WebSocket task: %s", err)
             self._websocket_task = None
         
         if self._websocket:
-            await self._websocket.close()
+            _LOGGER.debug("HA WebSocket: Closing WebSocket connection")
+            try:
+                await self._websocket.close()
+            except Exception as err:
+                _LOGGER.warning("HA WebSocket: Error while closing WebSocket: %s", err)
             self._websocket = None
 
     async def _websocket_handler(self) -> None:
         """Handle WebSocket connection and messages."""
-        import aiohttp
-        
         connection_attempts = 0
+        session = None
+        
         while True:
             try:
                 connection_attempts += 1
                 _LOGGER.debug("HA WebSocket: Attempting connection #%d to %s", connection_attempts, self.ws_url)
                 
-                session = aiohttp.ClientSession()
-                self._websocket = await session.ws_connect(self.ws_url)
+                # Create new session for each connection attempt
+                if session:
+                    await session.close()
+                session = aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30))
+                
+                self._websocket = await session.ws_connect(
+                    self.ws_url,
+                    heartbeat=30,  # Send ping every 30 seconds
+                    compress=False,
+                    timeout=30  # Connection timeout
+                )
                 _LOGGER.info("HA WebSocket: Successfully connected to TsuryPhone (attempt #%d)", connection_attempts)
                 connection_attempts = 0  # Reset on successful connection
                 
+                # Send a test ping immediately after connection
+                try:
+                    self._websocket.ping()
+                    _LOGGER.debug("HA WebSocket: Initial ping sent successfully")
+                except Exception as ping_err:
+                    _LOGGER.warning("HA WebSocket: Failed to send initial ping: %s", ping_err)
+                
+                # Handle incoming messages with periodic ping
+                last_ping_time = time.time()
                 async for msg in self._websocket:
+                    # Send periodic ping to keep connection alive (every 25 seconds)
+                    current_time = time.time()
+                    if current_time - last_ping_time > 25:
+                        try:
+                            self._websocket.ping()
+                            _LOGGER.debug("HA WebSocket: Periodic ping sent")
+                            last_ping_time = current_time
+                        except Exception as ping_err:
+                            _LOGGER.warning("HA WebSocket: Failed to send periodic ping: %s", ping_err)
+                    
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
                             _LOGGER.debug("HA WebSocket: Received message: %s", msg.data)
@@ -507,17 +593,46 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                     elif msg.type == aiohttp.WSMsgType.CLOSE:
                         _LOGGER.warning("HA WebSocket: Connection closed by server")
                         break
+                    elif msg.type == aiohttp.WSMsgType.PONG:
+                        _LOGGER.debug("HA WebSocket: Received pong")
                 
+                _LOGGER.warning("HA WebSocket: Message loop ended, connection lost")
+                
+            except asyncio.CancelledError:
+                _LOGGER.info("HA WebSocket: Handler cancelled, shutting down")
+                break
             except Exception as err:
                 _LOGGER.warning("HA WebSocket: Connection error (attempt #%d): %s", connection_attempts, err)
-                if self._websocket:
-                    await self._websocket.close()
-                    self._websocket = None
                 
-                # Exponential backoff with max delay
-                delay = min(5 * (2 ** min(connection_attempts - 1, 3)), 30)
-                _LOGGER.debug("HA WebSocket: Waiting %d seconds before reconnection attempt", delay)
-                await asyncio.sleep(delay)
+            finally:
+                # Clean up current connection
+                if self._websocket:
+                    try:
+                        await self._websocket.close()
+                    except Exception:
+                        pass
+                    self._websocket = None
+            
+            # Don't reconnect if we're shutting down
+            if self._websocket_shutdown:
+                _LOGGER.info("HA WebSocket: Shutdown requested, stopping reconnection attempts")
+                break
+                
+            # Exponential backoff with max delay for reconnection
+            if connection_attempts == 1:
+                delay = 1  # First retry quickly
+            elif connection_attempts <= 3:
+                delay = 5  # Quick retries for first few attempts
+            else:
+                delay = min(10 * (2 ** min(connection_attempts - 4, 2)), 30)  # Longer delays after that
+                
+            _LOGGER.info("HA WebSocket: Waiting %d seconds before reconnection attempt #%d", delay, connection_attempts + 1)
+            await asyncio.sleep(delay)
+        
+        # Final cleanup
+        if session:
+            await session.close()
+        _LOGGER.info("HA WebSocket: Handler terminated")
 
     def _merge_status_data(self, existing_status: Dict[str, Any], new_status: Dict[str, Any]) -> None:
         """Merge new status data with existing data, preserving fields not in the update.
