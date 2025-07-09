@@ -182,47 +182,37 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
         }
 
     async def _async_update_data(self) -> Dict[str, Any]:
-        """Fetch data from API endpoint."""
+        """Fetch data from API endpoint - only poll critical real-time data."""
         try:
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
-                # Gather all data in parallel
+                # Only poll critical real-time data
                 status_task = self._fetch_endpoint(session, ENDPOINT_STATUS)
                 stats_task = self._fetch_endpoint(session, ENDPOINT_STATS)
-                dnd_task = self._fetch_endpoint(session, ENDPOINT_DND)
-                phonebook_task = self._fetch_endpoint(session, ENDPOINT_PHONEBOOK)
-                blocked_task = self._fetch_endpoint(session, ENDPOINT_BLOCKED)
-                webhooks_task = self._fetch_endpoint(session, ENDPOINT_WEBHOOKS)
                 
-                status, stats, dnd, phonebook, blocked, webhooks = await asyncio.gather(
-                    status_task, stats_task, dnd_task, phonebook_task, blocked_task, webhooks_task,
+                status, stats = await asyncio.gather(
+                    status_task, stats_task,
                     return_exceptions=True
                 )
                 
-                # Handle any exceptions
-                data = {}
+                # Start with existing data (preserves on-demand loaded data)
+                data = self.data.copy() if self.data else {}
+                
+                # Update with fresh real-time data
                 if not isinstance(status, Exception):
                     data["status"] = status
+                    # Process status for call log tracking
+                    await self._process_status_for_call_log(status)
+                    
                 if not isinstance(stats, Exception):
                     data["stats"] = stats
                     await self._process_stats_for_call_log(stats)
-                if not isinstance(dnd, Exception):
-                    data["dnd"] = dnd
-                if not isinstance(phonebook, Exception):
-                    data["phonebook"] = phonebook
-                if not isinstance(blocked, Exception):
-                    data["blocked"] = blocked
-                if not isinstance(webhooks, Exception):
-                    data["webhooks"] = webhooks
                 
                 # Add call log to data
                 data["call_log"] = await self.get_call_log()
                 
-                if not data:
-                    raise UpdateFailed("No data received from any endpoint")
-                
-                # Process status for call log tracking
-                if "status" in data:
-                    await self._process_status_for_call_log(data["status"])
+                # Ensure we have at least status or stats
+                if "status" not in data and "stats" not in data:
+                    raise UpdateFailed("No critical data received from device")
                 
                 return data
                 
@@ -283,46 +273,64 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             "end_minute": end_minute,
         }
         await self._make_request("POST", ENDPOINT_DND, data)
+        # Refresh DND data after change
+        self.data["dnd"] = await self._fetch_dnd_data()
         await self.async_request_refresh()
 
     async def add_phonebook_entry(self, name: str, number: str) -> None:
         """Add a phonebook entry."""
         await self._make_action_request(ACTION_QUICK_DIAL_ADD, {"name": name, "number": number})
+        # Refresh phonebook data after change
+        self.data["phonebook"] = await self._fetch_phonebook_data()
         await self.async_request_refresh()
 
     async def remove_phonebook_entry(self, name: str) -> None:
         """Remove a phonebook entry."""
         await self._make_action_request(ACTION_QUICK_DIAL_REMOVE, {"name": name})
+        # Refresh phonebook data after change
+        self.data["phonebook"] = await self._fetch_phonebook_data()
         await self.async_request_refresh()
 
     async def add_blocked_number(self, number: str) -> None:
         """Add a blocked number."""
         await self._make_action_request(ACTION_BLOCKED_ADD, {"number": number})
+        # Refresh blocked data after change
+        self.data["blocked"] = await self._fetch_blocked_data()
         await self.async_request_refresh()
 
     async def remove_blocked_number(self, number: str) -> None:
         """Remove a blocked number."""
         await self._make_action_request(ACTION_BLOCKED_REMOVE, {"number": number})
+        # Refresh blocked data after change
+        self.data["blocked"] = await self._fetch_blocked_data()
         await self.async_request_refresh()
 
     async def add_webhook_shortcut(self, name: str, webhook_id: str) -> None:
         """Add a webhook shortcut with name and webhook ID."""
         await self._make_action_request(ACTION_WEBHOOK_ADD, {"number": name, "webhook_id": webhook_id})
+        # Refresh webhooks data after change
+        self.data["webhooks"] = await self._fetch_webhooks_data()
         await self.async_request_refresh()
 
     async def remove_webhook_shortcut(self, name: str) -> None:
         """Remove a webhook shortcut."""
         await self._make_action_request(ACTION_WEBHOOK_REMOVE, {"number": name})
+        # Refresh webhooks data after change
+        self.data["webhooks"] = await self._fetch_webhooks_data()
         await self.async_request_refresh()
 
     async def set_dnd_force_enabled(self, enabled: bool) -> None:
         """Enable or disable force Do Not Disturb."""
         await self._make_action_request(ACTION_DND, {"enabled": enabled})
+        # Refresh DND data after change
+        self.data["dnd"] = await self._fetch_dnd_data()
         await self.async_request_refresh()
 
     async def set_dnd_schedule_enabled(self, enabled: bool) -> None:
         """Enable or disable Do Not Disturb schedule."""
         await self._make_action_request(ACTION_DND_SCHEDULE, {"enabled": enabled})
+        # Refresh DND data after change
+        self.data["dnd"] = await self._fetch_dnd_data()
         await self.async_request_refresh()
 
     async def set_maintenance_mode(self, enabled: bool) -> None:
@@ -599,3 +607,67 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             await self._call_log_store.async_save(data)
         except Exception as err:
             _LOGGER.warning("Failed to save call log to storage: %s", err)
+
+    async def _fetch_webhooks_data(self) -> Dict[str, Any]:
+        """Fetch webhooks data on-demand."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                return await self._fetch_endpoint(session, ENDPOINT_WEBHOOKS)
+        except Exception as err:
+            _LOGGER.warning("Failed to fetch webhooks data: %s", err)
+            return {"webhooks": []}
+
+    async def _fetch_phonebook_data(self) -> Dict[str, Any]:
+        """Fetch phonebook data on-demand."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                return await self._fetch_endpoint(session, ENDPOINT_PHONEBOOK)
+        except Exception as err:
+            _LOGGER.warning("Failed to fetch phonebook data: %s", err)
+            return {"entries": []}
+
+    async def _fetch_blocked_data(self) -> Dict[str, Any]:
+        """Fetch blocked numbers data on-demand."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                return await self._fetch_endpoint(session, ENDPOINT_BLOCKED)
+        except Exception as err:
+            _LOGGER.warning("Failed to fetch blocked data: %s", err)
+            return {"blocked_numbers": []}
+
+    async def _fetch_dnd_data(self) -> Dict[str, Any]:
+        """Fetch DND configuration data on-demand."""
+        try:
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=10)) as session:
+                return await self._fetch_endpoint(session, ENDPOINT_DND)
+        except Exception as err:
+            _LOGGER.warning("Failed to fetch DND data: %s", err)
+            return {"force_enabled": False, "schedule_enabled": False}
+
+    async def get_webhooks_data(self) -> Dict[str, Any]:
+        """Get current webhooks data."""
+        if "webhooks" not in self.data:
+            # Fetch webhooks data on-demand if not available
+            self.data["webhooks"] = await self._fetch_webhooks_data()
+        return self.data.get("webhooks", {"webhooks": []})
+
+    async def get_phonebook_data(self) -> Dict[str, Any]:
+        """Get current phonebook data."""
+        if "phonebook" not in self.data:
+            # Fetch phonebook data on-demand if not available
+            self.data["phonebook"] = await self._fetch_phonebook_data()
+        return self.data.get("phonebook", {"entries": []})
+
+    async def get_blocked_data(self) -> Dict[str, Any]:
+        """Get current blocked numbers data."""
+        if "blocked" not in self.data:
+            # Fetch blocked data on-demand if not available
+            self.data["blocked"] = await self._fetch_blocked_data()
+        return self.data.get("blocked", {"blocked_numbers": []})
+
+    async def get_dnd_data(self) -> Dict[str, Any]:
+        """Get current DND configuration data."""
+        if "dnd" not in self.data:
+            # Fetch DND data on-demand if not available
+            self.data["dnd"] = await self._fetch_dnd_data()
+        return self.data.get("dnd", {"force_enabled": False, "schedule_enabled": False})

@@ -56,7 +56,7 @@ class TsuryPhoneHangupButton(TsuryPhoneBaseButton):
     async def async_press(self) -> None:
         """Handle the button press."""
         await self.coordinator.hangup()
-        await self.coordinator.async_request_refresh()
+        # Status changes will be reflected via WebSocket, no need for manual refresh
 
     @property
     def available(self) -> bool:
@@ -108,7 +108,7 @@ class TsuryPhoneRingButton(TsuryPhoneBaseButton):
             await self.coordinator.ring_device_with_pattern(default_pattern)
             _LOGGER.info("Rang device with default pattern: %s", default_pattern)
         
-        await self.coordinator.async_request_refresh()
+        # Ring action doesn't require immediate refresh - status updates via WebSocket
 
 
 class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):
@@ -123,7 +123,7 @@ class TsuryPhoneSwitchCallWaitingButton(TsuryPhoneBaseButton):
     async def async_press(self) -> None:
         """Handle the button press."""
         await self.coordinator.switch_to_call_waiting()
-        await self.coordinator.async_request_refresh()
+        # Call state changes will be reflected via WebSocket
 
     @property
     def available(self) -> bool:

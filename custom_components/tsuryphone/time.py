@@ -51,6 +51,14 @@ class TsuryPhoneDndStartTime(TsuryPhoneBaseTime):
         self._attr_name = "DnD Start Time"
         self._attr_icon = "mdi:clock-start"
 
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load DND data if not already loaded."""
+        await super().async_added_to_hass()
+        if "dnd" not in self.coordinator.data:
+            # Load DND data on-demand
+            await self.coordinator.get_dnd_data()
+            self.async_write_ha_state()
+
     @property
     def native_value(self) -> time | None:
         """Return the current value."""
@@ -71,7 +79,7 @@ class TsuryPhoneDndStartTime(TsuryPhoneBaseTime):
                 dnd.get("end_hour", 0),
                 dnd.get("end_minute", 0)
             )
-            await self.coordinator.async_request_refresh()
+            # DND data is already refreshed by the coordinator method
 
     @property
     def available(self) -> bool:
@@ -89,6 +97,14 @@ class TsuryPhoneDndEndTime(TsuryPhoneBaseTime):
         super().__init__(coordinator, "dnd_end_time")
         self._attr_name = "DnD End Time"
         self._attr_icon = "mdi:clock-end"
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load DND data if not already loaded."""
+        await super().async_added_to_hass()
+        if "dnd" not in self.coordinator.data:
+            # Load DND data on-demand
+            await self.coordinator.get_dnd_data()
+            self.async_write_ha_state()
 
     @property
     def native_value(self) -> time | None:
@@ -110,7 +126,7 @@ class TsuryPhoneDndEndTime(TsuryPhoneBaseTime):
                 value.hour,
                 value.minute
             )
-            await self.coordinator.async_request_refresh()
+            # DnD configuration will be refreshed on-demand
 
     @property
     def available(self) -> bool:

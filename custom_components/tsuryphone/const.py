@@ -24,7 +24,7 @@ CONF_DEVICE_NAME = "device_name"
 DEFAULT_PORT = 80
 DEFAULT_HA_SERVER_PORT = 8123
 DEFAULT_DEVICE_NAME = "tsuryphone"
-DEFAULT_SCAN_INTERVAL = 30  # Normal polling interval
+DEFAULT_SCAN_INTERVAL = 60  # Reduced polling interval for critical real-time data only
 FAST_REFRESH_INTERVAL = 1    # Fast refresh interval after actions
 
 # Device info

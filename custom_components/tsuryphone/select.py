@@ -26,7 +26,6 @@ async def async_setup_entry(
         TsuryPhonePhonebookSelect(coordinator),
         TsuryPhoneBlockedNumbersSelect(coordinator),
         TsuryPhoneRemovePhonebookSelect(coordinator),
-        TsuryPhoneWebhookShortcutsSelect(coordinator),
         TsuryPhoneRemoveWebhookSelect(coordinator),
     ]
 
@@ -58,6 +57,7 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         options = ["Select quick dial to call..."]
         
+        # Use coordinator data if available, otherwise show loading
         if "phonebook" in self.coordinator.data:
             entries = self.coordinator.data["phonebook"].get("entries", [])
             if entries:
@@ -66,8 +66,18 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
                     options.append(f"📞 {entry['name']}: {entry['number']}")
             else:
                 options.append("No quick dial entries")
+        else:
+            options.append("Loading quick dial entries...")
         
         return options
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load phonebook data if not already loaded."""
+        await super().async_added_to_hass()
+        if "phonebook" not in self.coordinator.data:
+            # Load phonebook data on-demand
+            await self.coordinator.get_phonebook_data()
+            self.async_write_ha_state()
 
     @property
     def current_option(self) -> Optional[str]:
@@ -87,7 +97,7 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
             phone_number = option_without_prefix.split(": ")[1]
             await self.coordinator.call_number(phone_number)
             _LOGGER.info("Called quick dial %s (%s) from phonebook", entry_name, phone_number)
-            await self.coordinator.async_request_refresh()
+            # Call status will be updated via WebSocket
 
     @property
     def available(self) -> bool:
@@ -110,6 +120,7 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         options = ["Select number to unblock..."]
         
+        # Use coordinator data if available, otherwise show loading
         if "blocked" in self.coordinator.data:
             entries = self.coordinator.data["blocked"].get("blocked_numbers", [])
             if entries:
@@ -118,8 +129,18 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
                     options.append(f"🗑️ {entry}")
             else:
                 options.append("No blocked numbers")
+        else:
+            options.append("Loading blocked numbers...")
         
         return options
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load blocked data if not already loaded."""
+        await super().async_added_to_hass()
+        if "blocked" not in self.coordinator.data:
+            # Load blocked data on-demand
+            await self.coordinator.get_blocked_data()
+            self.async_write_ha_state()
 
     @property
     def current_option(self) -> Optional[str]:
@@ -136,7 +157,7 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
             number = option.replace("🗑️ ", "")
             await self.coordinator.remove_blocked_number(number)
             _LOGGER.info("Unblocked number: %s", number)
-            await self.coordinator.async_request_refresh()
+            # Blocked data is already refreshed by the coordinator method
 
     @property
     def available(self) -> bool:
@@ -159,6 +180,7 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         options = ["Select quick dial to remove..."]
         
+        # Use coordinator data if available, otherwise show loading
         if "phonebook" in self.coordinator.data:
             entries = self.coordinator.data["phonebook"].get("entries", [])
             if entries:
@@ -167,8 +189,18 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
                     options.append(f"🗑️ {entry['name']}: {entry['number']}")
             else:
                 options.append("No quick dial entries")
+        else:
+            options.append("Loading quick dial entries...")
         
         return options
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load phonebook data if not already loaded."""
+        await super().async_added_to_hass()
+        if "phonebook" not in self.coordinator.data:
+            # Load phonebook data on-demand
+            await self.coordinator.get_phonebook_data()
+            self.async_write_ha_state()
 
     @property
     def current_option(self) -> Optional[str]:
@@ -187,78 +219,12 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
                 entry_number = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_phonebook_entry(entry_number)
                 _LOGGER.info("Removed quick dial entry %s from phonebook", entry_number)
-                await self.coordinator.async_request_refresh()
+                # Phonebook data is already refreshed by the coordinator method
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
         # Always available
-        return True
-
-
-class TsuryPhoneWebhookShortcutsSelect(TsuryPhoneBaseSelect):
-    """Select entity for webhook shortcuts - allows calling webhooks."""
-
-    def __init__(self, coordinator: TsuryPhoneDataUpdateCoordinator) -> None:
-        """Initialize the select."""
-        super().__init__(coordinator, "webhook_shortcuts")
-        self._attr_name = "Webhook Shortcuts"
-        self._attr_icon = "mdi:webhook"
-
-    @property
-    def options(self) -> List[str]:
-        """Return the list of available options."""
-        base_options = ["Select webhook to execute..."]
-        
-        if "webhooks" in self.coordinator.data:
-            webhook_data = self.coordinator.data["webhooks"]
-            # Handle the actual firmware format: {"webhooks": [{"number": "...", "webhook_id": "..."}]}
-            if isinstance(webhook_data, dict) and "webhooks" in webhook_data:
-                webhook_entries = webhook_data["webhooks"]
-                if webhook_entries and isinstance(webhook_entries, list):
-                    for entry in webhook_entries:
-                        if isinstance(entry, dict) and "number" in entry and "webhook_id" in entry:
-                            name = entry["number"]
-                            webhook_id = entry["webhook_id"]
-                            # Truncate long webhook IDs for display
-                            display_id = webhook_id[:20] + "..." if len(webhook_id) > 20 else webhook_id
-                            base_options.append(f"🔗 {name}: {display_id}")
-                else:
-                    base_options.append("No webhook shortcuts")
-            else:
-                base_options.append("No webhook shortcuts")
-        else:
-            base_options.append("No webhook shortcuts")
-            
-        return base_options
-
-    @property
-    def current_option(self) -> Optional[str]:
-        """Return the current option."""
-        return "Select webhook to execute..."
-
-    async def async_select_option(self, option: str) -> None:
-        """Change the selected option and execute webhook."""
-        if option in ["Select webhook to execute...", "No webhook shortcuts"]:
-            return
-            
-        if option.startswith("🔗 "):
-            # Extract webhook name and execute it by "dialing" it
-            # Format: "🔗 alarm: http://example.com/webhook..."
-            if ": " in option:
-                webhook_name = option.split(": ")[0].replace("🔗 ", "")
-                # Call the webhook by using the call function with the webhook name
-                await self.coordinator.call_number(webhook_name)
-                _LOGGER.info("Executed webhook shortcut: %s", webhook_name)
-                await self.coordinator.async_request_refresh()
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        # Only available when not in a call
-        if "status" in self.coordinator.data:
-            call = self.coordinator.data["status"].get("call", {})
-            return not call.get("active", False)
         return True
 
 
@@ -276,6 +242,8 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
         """Return the list of available options."""
         base_options = ["Select webhook to remove..."]
         
+        # Use async_add_entities callback to get webhooks data on-demand
+        # For now, check if webhooks data is available, if not show placeholder
         if "webhooks" in self.coordinator.data:
             webhook_data = self.coordinator.data["webhooks"]
             # Handle the actual firmware format: {"webhooks": [{"number": "...", "webhook_id": "..."}]}
@@ -294,7 +262,8 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
             else:
                 base_options.append("No webhook shortcuts")
         else:
-            base_options.append("No webhook shortcuts")
+            # Fetch webhooks data on-demand when needed
+            base_options.append("Loading webhooks...")
             
         return base_options
 
@@ -315,10 +284,18 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
                 webhook_name = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_webhook_shortcut(webhook_name)
                 _LOGGER.info("Removed webhook shortcut: %s", webhook_name)
-                await self.coordinator.async_request_refresh()
+                # Webhook data is already refreshed by the coordinator method
 
     @property
     def available(self) -> bool:
         """Return if entity is available."""
         # Always available
         return True
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load webhooks data if not already loaded."""
+        await super().async_added_to_hass()
+        if "webhooks" not in self.coordinator.data:
+            # Load webhooks data on-demand
+            await self.coordinator.get_webhooks_data()
+            self.async_write_ha_state()

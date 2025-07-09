@@ -179,7 +179,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_phonebook_entry(name, number)
-            await coordinator.async_request_refresh()
+            # Phonebook data will be refreshed on-demand
             _LOGGER.info("Added phonebook entry %s: %s on device %s", name, number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -198,7 +198,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_phonebook_entry(name)
-            await coordinator.async_request_refresh()
+            # Phonebook data will be refreshed on-demand
             _LOGGER.info("Removed phonebook entry %s on device %s", name, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -217,7 +217,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_blocked_number(number)
-            await coordinator.async_request_refresh()
+            # Blocked numbers data will be refreshed on-demand
             _LOGGER.info("Added blocked number %s on device %s", number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -236,7 +236,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_blocked_number(number)
-            await coordinator.async_request_refresh()
+            # Blocked numbers data will be refreshed on-demand
             _LOGGER.info("Removed blocked number %s on device %s", number, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -256,7 +256,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_webhook_shortcut(name, webhook_id)
-            await coordinator.async_request_refresh()
+            # Webhook data will be refreshed on-demand
             _LOGGER.info("Added webhook shortcut %s -> %s on device %s", name, webhook_id, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -275,7 +275,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_webhook_shortcut(name)
-            await coordinator.async_request_refresh()
+            # Webhook data will be refreshed on-demand
             _LOGGER.info("Removed webhook shortcut %s on device %s", name, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -365,7 +365,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_hours(start_hour, start_minute, end_hour, end_minute)
-            await coordinator.async_request_refresh()
+            # DnD configuration will be refreshed on-demand
             _LOGGER.info("Set DnD hours %02d:%02d to %02d:%02d on device %s", start_hour, start_minute, end_hour, end_minute, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -383,7 +383,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_force_enabled(enabled)
-            await coordinator.async_request_refresh()
+            # DnD configuration will be refreshed on-demand
             _LOGGER.info("Set DnD force enabled to %s on device %s", enabled, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)
@@ -401,7 +401,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_schedule_enabled(enabled)
-            await coordinator.async_request_refresh()
+            # DnD configuration will be refreshed on-demand
             _LOGGER.info("Set DnD schedule enabled to %s on device %s", enabled, device_id)
         else:
             _LOGGER.error("Device %s not found", device_id)

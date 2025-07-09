@@ -487,6 +487,14 @@ class TsuryPhoneWebhookCountSensor(TsuryPhoneBaseSensor):
         self._attr_icon = "mdi:webhook"
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load webhooks data if not already loaded."""
+        await super().async_added_to_hass()
+        if "webhooks" not in self.coordinator.data:
+            # Load webhooks data on-demand
+            await self.coordinator.get_webhooks_data()
+            self.async_write_ha_state()
+
     @property
     def native_value(self) -> StateType:
         """Return the webhook shortcuts count."""

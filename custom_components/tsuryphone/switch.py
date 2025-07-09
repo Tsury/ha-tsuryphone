@@ -51,6 +51,14 @@ class TsuryPhoneDndForceSwitch(TsuryPhoneBaseSwitch):
         self._attr_name = "DnD Force"
         self._attr_icon = "mdi:bell-off-outline"
 
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load DND data if not already loaded."""
+        await super().async_added_to_hass()
+        if "dnd" not in self.coordinator.data:
+            # Load DND data on-demand
+            await self.coordinator.get_dnd_data()
+            self.async_write_ha_state()
+
     @property
     def is_on(self) -> bool:
         """Return true if DnD force is enabled."""
@@ -61,12 +69,12 @@ class TsuryPhoneDndForceSwitch(TsuryPhoneBaseSwitch):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on force Do Not Disturb."""
         await self.coordinator.set_dnd_force_enabled(True)
-        await self.coordinator.async_request_refresh()
+        # DND data is already refreshed by the coordinator method
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off force Do Not Disturb."""
         await self.coordinator.set_dnd_force_enabled(False)
-        await self.coordinator.async_request_refresh()
+        # DND data is already refreshed by the coordinator method
 
 
 class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
@@ -76,7 +84,15 @@ class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
         """Initialize the switch."""
         super().__init__(coordinator, "dnd_schedule")
         self._attr_name = "DnD Schedule"
-        self._attr_icon = "mdi:calendar-clock"
+        self._attr_icon = "mdi:clock-outline"
+
+    async def async_added_to_hass(self) -> None:
+        """When entity is added to hass, load DND data if not already loaded."""
+        await super().async_added_to_hass()
+        if "dnd" not in self.coordinator.data:
+            # Load DND data on-demand
+            await self.coordinator.get_dnd_data()
+            self.async_write_ha_state()
 
     @property
     def is_on(self) -> bool:
@@ -88,12 +104,12 @@ class TsuryPhoneDndScheduleSwitch(TsuryPhoneBaseSwitch):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on Do Not Disturb schedule."""
         await self.coordinator.set_dnd_schedule_enabled(True)
-        await self.coordinator.async_request_refresh()
+        # DND data is already refreshed by the coordinator method
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off Do Not Disturb schedule."""
         await self.coordinator.set_dnd_schedule_enabled(False)
-        await self.coordinator.async_request_refresh()
+        # DND data is already refreshed by the coordinator method
 
 
 class TsuryPhoneMaintenanceModeSwitch(TsuryPhoneBaseSwitch):
@@ -115,9 +131,9 @@ class TsuryPhoneMaintenanceModeSwitch(TsuryPhoneBaseSwitch):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn on maintenance mode."""
         await self.coordinator.set_maintenance_mode(True)
-        await self.coordinator.async_request_refresh()
+        # Status changes will be reflected via WebSocket
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn off maintenance mode."""
         await self.coordinator.set_maintenance_mode(False)
-        await self.coordinator.async_request_refresh()
+        # Status changes will be reflected via WebSocket
