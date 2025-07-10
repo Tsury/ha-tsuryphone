@@ -8,7 +8,6 @@ from .const import DOMAIN
 
 SERVICE_CALL_NUMBER = "call_number"
 SERVICE_HANGUP = "hangup"
-SERVICE_RING_DEVICE = "ring_device"
 SERVICE_RING_DEVICE_WITH_PATTERN = "ring_device_with_pattern"
 SERVICE_RESET_DEVICE = "reset_device"
 SERVICE_SET_MAINTENANCE_MODE = "set_maintenance_mode"
@@ -32,11 +31,6 @@ CALL_NUMBER_SCHEMA = vol.Schema({
 
 HANGUP_SCHEMA = vol.Schema({
     vol.Required("device_id"): cv.string,
-})
-
-RING_DEVICE_SCHEMA = vol.Schema({
-    vol.Required("device_id"): cv.string,
-    vol.Optional("duration", default=5000): vol.All(vol.Coerce(int), vol.Range(min=500, max=30000)),
 })
 
 RING_DEVICE_WITH_PATTERN_SCHEMA = vol.Schema({
@@ -122,21 +116,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.call_number(number)
-            await coordinator.async_request_refresh()
-
-    async def handle_ring_device(call: ServiceCall) -> None:
-        """Handle ring device service."""
-        device_id = call.data.get("device_id")
-        duration = call.data.get("duration", 5000)
-        
-        coordinator = None
-        for entry_id, coord in hass.data[DOMAIN].items():
-            if hasattr(coord, "base_url") and device_id in coord.base_url:
-                coordinator = coord
-                break
-                
-        if coordinator:
-            await coordinator.ring_device(duration)
             await coordinator.async_request_refresh()
 
     async def handle_ring_device_with_pattern(call: ServiceCall) -> None:
@@ -380,10 +359,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     )
     
     hass.services.async_register(
-        DOMAIN, SERVICE_RING_DEVICE, handle_ring_device, schema=RING_DEVICE_SCHEMA
-    )
-    
-    hass.services.async_register(
         DOMAIN, SERVICE_RING_DEVICE_WITH_PATTERN, handle_ring_device_with_pattern, schema=RING_DEVICE_WITH_PATTERN_SCHEMA
     )
     
@@ -448,7 +423,7 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     """Unload services for TsuryPhone integration."""
     hass.services.async_remove(DOMAIN, SERVICE_CALL_NUMBER)
     hass.services.async_remove(DOMAIN, SERVICE_HANGUP)
-    hass.services.async_remove(DOMAIN, SERVICE_RING_DEVICE)
+    hass.services.async_remove(DOMAIN, SERVICE_RING_DEVICE_WITH_PATTERN)
     hass.services.async_remove(DOMAIN, SERVICE_RESET_DEVICE)
     hass.services.async_remove(DOMAIN, SERVICE_SET_MAINTENANCE_MODE)
     hass.services.async_remove(DOMAIN, SERVICE_SWITCH_TO_CALL_WAITING)
@@ -456,6 +431,8 @@ async def async_unload_services(hass: HomeAssistant) -> None:
     hass.services.async_remove(DOMAIN, SERVICE_REMOVE_PHONEBOOK_ENTRY)
     hass.services.async_remove(DOMAIN, SERVICE_ADD_BLOCKED_NUMBER)
     hass.services.async_remove(DOMAIN, SERVICE_REMOVE_BLOCKED_NUMBER)
+    hass.services.async_remove(DOMAIN, SERVICE_ADD_WEBHOOK_SHORTCUT)
+    hass.services.async_remove(DOMAIN, SERVICE_REMOVE_WEBHOOK_SHORTCUT)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_HOURS)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_FORCE_ENABLED)
     hass.services.async_remove(DOMAIN, SERVICE_SET_DND_SCHEDULE_ENABLED)

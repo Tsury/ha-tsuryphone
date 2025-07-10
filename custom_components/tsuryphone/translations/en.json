@@ -142,20 +142,6 @@
         }
       }
     },
-    "ring_device": {
-      "name": "Ring Device",
-      "description": "Ring the device for a specified duration",
-      "fields": {
-        "device_id": {
-          "name": "Device",
-          "description": "The TsuryPhone device to use"
-        },
-        "duration": {
-          "name": "Duration (ms)",
-          "description": "Duration to ring in milliseconds (500-30000, default: 5000)"
-        }
-      }
-    },
     "add_phonebook_entry": {
       "name": "Add Phonebook Entry",
       "description": "Add a new entry to the phonebook",
@@ -188,9 +174,9 @@
         }
       }
     },
-    "add_screened_number": {
-      "name": "Add Screened Number",
-      "description": "Add a number to the screened (blocked) list",
+    "add_blocked_number": {
+      "name": "Add Blocked Number",
+      "description": "Add a number to the blocked list",
       "fields": {
         "device_id": {
           "name": "Device",
@@ -202,9 +188,9 @@
         }
       }
     },
-    "remove_screened_number": {
-      "name": "Remove Screened Number",
-      "description": "Remove a number from the screened (blocked) list",
+    "remove_blocked_number": {
+      "name": "Remove Blocked Number",
+      "description": "Remove a number from the blocked list",
       "fields": {
         "device_id": {
           "name": "Device",

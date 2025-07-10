@@ -28,28 +28,6 @@ hangup:
       selector:
         text:
 
-ring_device:
-  name: Ring Device
-  description: Ring the TsuryPhone device for a specified duration
-  fields:
-    device_id:
-      name: Device ID
-      description: The device ID of the TsuryPhone
-      required: true
-      selector:
-        text:
-    duration:
-      name: Duration (ms)
-      description: Ring duration in milliseconds
-      required: false
-      default: 5000
-      selector:
-        number:
-          min: 500
-          max: 30000
-          step: 500
-          unit_of_measurement: "ms"
-
 ring_device_with_pattern:
   name: Ring Device with Pattern
   description: Ring the TsuryPhone device with a specific ring pattern
@@ -147,9 +125,9 @@ remove_phonebook_entry:
       selector:
         text:
 
-add_screened_number:
-  name: Add Screened Number
-  description: Add a number to the blocked/screened list
+add_blocked_number:
+  name: Add Blocked Number
+  description: Add a number to the blocked list
   fields:
     device_id:
       name: Device ID
@@ -164,9 +142,9 @@ add_screened_number:
       selector:
         text:
 
-remove_screened_number:
-  name: Remove Screened Number
-  description: Remove a number from the blocked/screened list
+remove_blocked_number:
+  name: Remove Blocked Number
+  description: Remove a number from the blocked list
   fields:
     device_id:
       name: Device ID

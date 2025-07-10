@@ -199,7 +199,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
             # Test connection health with a ping
             try:
                 if self._websocket:
-                    self._websocket.ping()
+                    await self._websocket.ping()
                     _LOGGER.debug("HA WebSocket: Connection health check ping sent")
             except Exception as ping_err:
                 _LOGGER.warning("HA WebSocket: Connection health check failed: %s, restarting...", ping_err)
@@ -535,7 +535,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                 
                 # Send a test ping immediately after connection
                 try:
-                    self._websocket.ping()
+                    await self._websocket.ping()
                     _LOGGER.debug("HA WebSocket: Initial ping sent successfully")
                 except Exception as ping_err:
                     _LOGGER.warning("HA WebSocket: Failed to send initial ping: %s", ping_err)
@@ -547,7 +547,7 @@ class TsuryPhoneDataUpdateCoordinator(DataUpdateCoordinator):
                     current_time = time.time()
                     if current_time - last_ping_time > 25:
                         try:
-                            self._websocket.ping()
+                            await self._websocket.ping()
                             _LOGGER.debug("HA WebSocket: Periodic ping sent")
                             last_ping_time = current_time
                         except Exception as ping_err:
