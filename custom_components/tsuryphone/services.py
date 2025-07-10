@@ -1,13 +1,10 @@
 """Services for TsuryPhone integration."""
-import logging
 import voluptuous as vol
 
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN
-
-_LOGGER = logging.getLogger(__name__)
 
 SERVICE_CALL_NUMBER = "call_number"
 SERVICE_HANGUP = "hangup"
@@ -117,7 +114,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         device_id = call.data.get("device_id")
         number = call.data.get("number")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -127,16 +123,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.call_number(number)
             await coordinator.async_request_refresh()
-            _LOGGER.info("Called %s on device %s", number, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_ring_device(call: ServiceCall) -> None:
         """Handle ring device service."""
         device_id = call.data.get("device_id")
         duration = call.data.get("duration", 5000)
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -146,16 +138,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.ring_device(duration)
             await coordinator.async_request_refresh()
-            _LOGGER.info("Rang device %s for %d ms", device_id, duration)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_ring_device_with_pattern(call: ServiceCall) -> None:
         """Handle ring device with pattern service."""
         device_id = call.data.get("device_id")
         pattern = call.data.get("pattern")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -165,9 +153,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.ring_device_with_pattern(pattern)
             await coordinator.async_request_refresh()
-            _LOGGER.info("Rang device %s with pattern: %s", device_id, pattern)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_add_phonebook_entry(call: ServiceCall) -> None:
         """Handle add phonebook entry service."""
@@ -175,7 +160,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         name = call.data.get("name")
         number = call.data.get("number")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -184,17 +168,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_phonebook_entry(name, number)
-            # Phonebook data will be refreshed on-demand
-            _LOGGER.info("Added phonebook entry %s: %s on device %s", name, number, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_remove_phonebook_entry(call: ServiceCall) -> None:
         """Handle remove phonebook entry service."""
         device_id = call.data.get("device_id")
         name = call.data.get("name")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -203,17 +182,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_phonebook_entry(name)
-            # Phonebook data will be refreshed on-demand
-            _LOGGER.info("Removed phonebook entry %s on device %s", name, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_add_blocked_number(call: ServiceCall) -> None:
         """Handle add blocked number service."""
         device_id = call.data.get("device_id")
         number = call.data.get("number")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -222,17 +196,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_blocked_number(number)
-            # Blocked numbers data will be refreshed on-demand
-            _LOGGER.info("Added blocked number %s on device %s", number, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_remove_blocked_number(call: ServiceCall) -> None:
         """Handle remove blocked number service."""
         device_id = call.data.get("device_id")
         number = call.data.get("number")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -241,10 +210,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_blocked_number(number)
-            # Blocked numbers data will be refreshed on-demand
-            _LOGGER.info("Removed blocked number %s on device %s", number, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_add_webhook_shortcut(call: ServiceCall) -> None:
         """Handle add webhook shortcut service."""
@@ -252,7 +217,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         name = call.data.get("name")
         webhook_id = call.data.get("url")  # Keep "url" for backward compatibility but treat as webhook_id
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -261,17 +225,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.add_webhook_shortcut(name, webhook_id)
-            # Webhook data will be refreshed on-demand
-            _LOGGER.info("Added webhook shortcut %s -> %s on device %s", name, webhook_id, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_remove_webhook_shortcut(call: ServiceCall) -> None:
         """Handle remove webhook shortcut service."""
         device_id = call.data.get("device_id")
         name = call.data.get("name")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -280,10 +239,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.remove_webhook_shortcut(name)
-            # Webhook data will be refreshed on-demand
-            _LOGGER.info("Removed webhook shortcut %s on device %s", name, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_hangup(call: ServiceCall) -> None:
         """Handle hangup service."""
@@ -298,9 +253,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.hangup()
             await coordinator.async_request_refresh()
-            _LOGGER.info("Hung up call on device %s", device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_reset_device(call: ServiceCall) -> None:
         """Handle reset device service."""
@@ -315,9 +267,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.reset_device()
             await coordinator.async_request_refresh()
-            _LOGGER.info("Reset device %s", device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_set_maintenance_mode(call: ServiceCall) -> None:
         """Handle set maintenance mode service."""
@@ -333,9 +282,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.set_maintenance_mode(enabled)
             await coordinator.async_request_refresh()
-            _LOGGER.info("Set maintenance mode to %s on device %s", enabled, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_switch_to_call_waiting(call: ServiceCall) -> None:
         """Handle switch to call waiting service."""
@@ -350,9 +296,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         if coordinator:
             await coordinator.switch_to_call_waiting()
             await coordinator.async_request_refresh()
-            _LOGGER.info("Switched to call waiting on device %s", device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_set_dnd_hours(call: ServiceCall) -> None:
         """Handle set DnD hours service."""
@@ -370,10 +313,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_hours(start_hour, start_minute, end_hour, end_minute)
-            # DnD configuration will be refreshed on-demand
-            _LOGGER.info("Set DnD hours %02d:%02d to %02d:%02d on device %s", start_hour, start_minute, end_hour, end_minute, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_set_dnd_force_enabled(call: ServiceCall) -> None:
         """Handle set DnD force enabled service."""
@@ -388,10 +327,6 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_force_enabled(enabled)
-            # DnD configuration will be refreshed on-demand
-            _LOGGER.info("Set DnD force enabled to %s on device %s", enabled, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_set_dnd_schedule_enabled(call: ServiceCall) -> None:
         """Handle set DnD schedule enabled service."""
@@ -406,16 +341,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 
         if coordinator:
             await coordinator.set_dnd_schedule_enabled(enabled)
-            # DnD configuration will be refreshed on-demand
-            _LOGGER.info("Set DnD schedule enabled to %s on device %s", enabled, device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_clear_call_log(call: ServiceCall) -> None:
         """Handle clear call log service."""
         device_id = call.data.get("device_id")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -423,19 +353,14 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            # Clear the call log
             coordinator._call_log = []
             await coordinator._save_call_log()
             await coordinator.async_request_refresh()
-            _LOGGER.info("Cleared call log for device %s", device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     async def handle_refresh_status(call: ServiceCall) -> None:
         """Handle refresh status service."""
         device_id = call.data.get("device_id")
         
-        # Find coordinator for this device
         coordinator = None
         for entry_id, coord in hass.data[DOMAIN].items():
             if hasattr(coord, "base_url") and device_id in coord.base_url:
@@ -443,11 +368,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
                 break
                 
         if coordinator:
-            # Force a full status refresh
             await coordinator.refresh_full_status()
-            _LOGGER.info("Refreshed full status for device %s", device_id)
-        else:
-            _LOGGER.error("Device %s not found", device_id)
 
     # Register services
     hass.services.async_register(

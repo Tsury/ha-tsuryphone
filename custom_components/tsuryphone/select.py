@@ -1,5 +1,4 @@
 """Select platform for TsuryPhone."""
-import logging
 from typing import Any, List, Optional
 
 from homeassistant.components.select import SelectEntity
@@ -10,8 +9,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import TsuryPhoneDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -96,7 +93,6 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
             entry_name = option_without_prefix.split(": ")[0]
             phone_number = option_without_prefix.split(": ")[1]
             await self.coordinator.call_number(phone_number)
-            _LOGGER.info("Called quick dial %s (%s) from phonebook", entry_name, phone_number)
             # Call status will be updated via WebSocket
 
     @property
@@ -156,7 +152,6 @@ class TsuryPhoneBlockedNumbersSelect(TsuryPhoneBaseSelect):
             # Remove the number from blocked list
             number = option.replace("🗑️ ", "")
             await self.coordinator.remove_blocked_number(number)
-            _LOGGER.info("Unblocked number: %s", number)
             # Blocked data is already refreshed by the coordinator method
 
     @property
@@ -218,7 +213,6 @@ class TsuryPhoneRemovePhonebookSelect(TsuryPhoneBaseSelect):
             if ": " in option:
                 entry_number = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_phonebook_entry(entry_number)
-                _LOGGER.info("Removed quick dial entry %s from phonebook", entry_number)
                 # Phonebook data is already refreshed by the coordinator method
 
     @property
@@ -283,7 +277,6 @@ class TsuryPhoneRemoveWebhookSelect(TsuryPhoneBaseSelect):
             if ": " in option:
                 webhook_name = option.split(": ")[0].replace("🗑️ ", "")
                 await self.coordinator.remove_webhook_shortcut(webhook_name)
-                _LOGGER.info("Removed webhook shortcut: %s", webhook_name)
                 # Webhook data is already refreshed by the coordinator method
 
     @property

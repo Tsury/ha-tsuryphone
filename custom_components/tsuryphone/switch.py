@@ -1,5 +1,4 @@
 """Switch platform for TsuryPhone."""
-import logging
 from typing import Any
 
 from homeassistant.components.switch import SwitchEntity
@@ -10,8 +9,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import TsuryPhoneDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(

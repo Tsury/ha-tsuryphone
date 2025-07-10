@@ -1,5 +1,4 @@
 """Sensor platform for TsuryPhone."""
-import logging
 from typing import Any, Dict, Optional
 
 from homeassistant.components.sensor import (
@@ -15,8 +14,6 @@ from homeassistant.helpers.typing import StateType
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import TsuryPhoneDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(

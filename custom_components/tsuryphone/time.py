@@ -1,5 +1,4 @@
 """Time platform for TsuryPhone Do Not Disturb settings."""
-import logging
 from datetime import time
 from typing import Any
 
@@ -11,8 +10,6 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, MANUFACTURER, MODEL
 from .coordinator import TsuryPhoneDataUpdateCoordinator
-
-_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
