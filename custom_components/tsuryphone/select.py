@@ -86,7 +86,7 @@ class TsuryPhonePhonebookSelect(TsuryPhoneBaseSelect):
         if option in ["Select quick dial to call...", "No quick dial entries"]:
             return
             
-        # Format: "📞 211: 0546662771"
+        # Format: "📞 211: 0521234567"
         if ": " in option and option.startswith("📞 "):
             # Remove the call icon prefix first
             option_without_prefix = option.replace("📞 ", "")
