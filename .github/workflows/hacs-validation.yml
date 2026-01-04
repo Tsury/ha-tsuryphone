@@ -149,4 +149,4 @@ jobs:
           echo "### Next Steps for HACS Publication:" >> $GITHUB_STEP_SUMMARY
           echo "1. 🏷️ Create a GitHub release (recommended)" >> $GITHUB_STEP_SUMMARY
           echo "2. 📝 Submit to [HACS default repositories](https://github.com/hacs/default) if desired" >> $GITHUB_STEP_SUMMARY
-          echo "3. 🔗 Users can add as custom repository: \`https://github.com/your-org/ha-tsuryphone\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. 🔗 Users can add as custom repository: \`https://github.com/Tsury/ha-tsuryphone\`" >> $GITHUB_STEP_SUMMARY
